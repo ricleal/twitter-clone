@@ -1,0 +1,122 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Twitter API
+tags:
+  - name: Twitter
+    description: Twitter Clone API
+paths:
+  /users:
+    post:
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+    get:
+      summary: List all users
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /users/{id}:
+    get:
+      summary: Get user profile by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /tweets:
+    post:
+      summary: Create a tweet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tweet'
+      responses:
+        '201':
+          description: Tweet created successfully
+    get:
+      summary: List all tweets
+      responses:
+        '200':
+          description: List of tweets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweet'
+  /tweets/{id}:
+    get:
+      summary: Get tweet by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tweet ID
+      responses:
+        '200':
+          description: Tweet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+      required:
+        - username
+        - email
+    Tweet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        user:
+          type: string
+          format: uuid
+      required:
+        - content
+        - user

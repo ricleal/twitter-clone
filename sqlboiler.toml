@@ -1,0 +1,7 @@
+[psql]
+dbname    = "twitter"
+user      = "postgres"
+sslmode   = "disable"
+blacklist = [
+    "schema_migrations"
+]

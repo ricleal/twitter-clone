@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  postgres:
+    image: postgres:15.3
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    command: >
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+      -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+      -c logging_collector=on
+      -c log_directory=/var/log/postgresql
+      -c log_filename=postgresql.log
+      -c log_statement=all
+    volumes:
+      - ./volumes/var/lib/postgresql:/var/lib/postgresql
+      - ./volumes/var/log/postgresql:/var/log/postgresql
