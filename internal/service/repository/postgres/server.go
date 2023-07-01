@@ -11,6 +11,8 @@ import (
 
 func open() (*sql.DB, error) {
 	dbURL := os.Getenv("DATABASE_URL")
+	fmt.Println("***** dbURL", dbURL)
+
 	if dbURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL not set")
 	}
@@ -26,6 +28,14 @@ func open() (*sql.DB, error) {
 
 type Server struct {
 	dbConn *sql.DB
+}
+
+func (s *Server) Close() error {
+	return s.dbConn.Close()
+}
+
+func (s *Server) DB() *sql.DB {
+	return s.dbConn
 }
 
 func New() *Server {

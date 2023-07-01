@@ -24,14 +24,18 @@ openapi-generate: ## Generate OpenAPI client
 	oapi-codegen \
 		-generate types \
 		-package openapi \
-		-o internal/openapi/types.go \
+		-o internal/api/openapi/types.go \
 		openapi.yaml
 	oapi-codegen \
 		-generate chi-server \
 		-package openapi \
-		-o internal/openapi/chi.go \
+		-o internal/api/openapi/chi.go \
 		openapi.yaml
-
+	oapi-codegen \
+		-generate spec \
+		-package openapi \
+		-o internal/api/openapi/spec.go \
+		openapi.yaml
 ## DB targets
 
 .PHONY: db-start
@@ -48,6 +52,14 @@ db-cli: ## Postgres CLI
 	@PGPASSWORD='$(DB_PASSWORD)' \
 		pgcli -h $(DB_HOSTNAME) -u $(DB_USERNAME) -p $(DB_PORT) -d $(DB_NAME)
 
+## Development targets
+.PHONY: dev
+dev: ## Run development server
+	DATABASE_URL=$(DB_URL) go run ./cmd/twitter
+
+.PHONY: test
+test: ## Run tests
+	@$(DB_VARS) DATABASE_URL=$(DB_URL) go test -v ./...
 
 # https://github.com/golang-migrate/migrate
 # brew install golang-migrate

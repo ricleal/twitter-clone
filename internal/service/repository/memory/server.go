@@ -1,10 +1,10 @@
 package memory
 
-import "github.com/ricleal/twitter-clone/internal/service"
+import "github.com/ricleal/twitter-clone/internal/service/repository"
 
 type Server struct {
-	Tweets []service.Tweet
-	Users  []service.User
+	Tweets []repository.Tweet
+	Users  []repository.User
 }
 
 func New() *Server {
