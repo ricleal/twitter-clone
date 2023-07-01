@@ -10,22 +10,22 @@ import (
 )
 
 type sqlStore struct {
-	db DBTx
+	db repository.DBTx
 }
 
 // New creates a new store.
-func NewSQLStore(db DBTx) *sqlStore {
+func NewSQLStore(db repository.DBTx) *sqlStore {
 	return &sqlStore{
 		db: db,
 	}
 }
 
 func (s *sqlStore) Tweets() repository.TweetRepository {
-	return &postgres.TweetServer{}
+	return postgres.NewTweetServer(s.db)
 }
 
 func (s *sqlStore) Users() repository.UserRepository {
-	return &postgres.UserServer{}
+	return postgres.NewUserServer(s.db)
 }
 
 // ExecTx executes the given function within a database transaction.

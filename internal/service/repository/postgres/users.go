@@ -12,10 +12,16 @@ import (
 )
 
 type UserServer struct {
-	Server
+	dbConn repository.DBTx
 }
 
-func (s *UserServer) Create(ctx context.Context, u repository.User) error {
+func NewUserServer(dbConn repository.DBTx) *UserServer {
+	return &UserServer{
+		dbConn: dbConn,
+	}
+}
+
+func (s *UserServer) Create(ctx context.Context, u *repository.User) error {
 	user := orm.User{
 		ID:       uuid.NewString(),
 		Username: u.Username,
@@ -34,6 +40,10 @@ func (s *UserServer) Create(ctx context.Context, u repository.User) error {
 func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
 	ormUsers, err := orm.Users().All(ctx, s.dbConn)
 	if err != nil {
+		// Check if the error is a not found error
+		if err.Error() == "sql: no rows in result set" {
+			return nil, repository.ErrNotFound
+		}
 		return nil, fmt.Errorf("failed to find all users: %w", err)
 	}
 
@@ -53,7 +63,47 @@ func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
 func (s *UserServer) FindByID(ctx context.Context, id string) (*repository.User, error) {
 	ormUser, err := orm.FindUser(ctx, s.dbConn, id)
 	if err != nil {
+		// Check if the error is a not found error
+		if err.Error() == "sql: no rows in result set" {
+			return nil, repository.ErrNotFound
+		}
 		return nil, fmt.Errorf("failed to find user by id: %w", err)
+	}
+
+	return &repository.User{
+		ID:       uuid.MustParse(ormUser.ID),
+		Username: ormUser.Username,
+		Email:    ormUser.Email,
+		Name:     ormUser.Name.String,
+	}, nil
+}
+
+func (s *UserServer) FindByUsername(ctx context.Context, username string) (*repository.User, error) {
+	ormUser, err := orm.Users(orm.UserWhere.Username.EQ(username)).One(ctx, s.dbConn)
+	if err != nil {
+		// Check if the error is a not found error
+		if err.Error() == "sql: no rows in result set" {
+			return nil, repository.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to find user by username: %w", err)
+	}
+
+	return &repository.User{
+		ID:       uuid.MustParse(ormUser.ID),
+		Username: ormUser.Username,
+		Email:    ormUser.Email,
+		Name:     ormUser.Name.String,
+	}, nil
+}
+
+func (s *UserServer) FindByEmail(ctx context.Context, email string) (*repository.User, error) {
+	ormUser, err := orm.Users(orm.UserWhere.Email.EQ(email)).One(ctx, s.dbConn)
+	if err != nil {
+		// Check if the error is a not found error
+		if err.Error() == "sql: no rows in result set" {
+			return nil, repository.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
 
 	return &repository.User{

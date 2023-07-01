@@ -17,6 +17,12 @@ DB_VARS = \
 
 DB_URL ?= "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOSTNAME):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
 
+# Cwd + path to migrations
+MIGRATIONS_PATH ?= $(shell pwd)/migrations
+
+LOG_LEVEL ?= debug
+API_PORT ?= 8888
+
 ## OpenAPI targets
 # Install: go install "github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest"
 .PHONY: openapi-generate
@@ -52,14 +58,30 @@ db-cli: ## Postgres CLI
 	@PGPASSWORD='$(DB_PASSWORD)' \
 		pgcli -h $(DB_HOSTNAME) -u $(DB_USERNAME) -p $(DB_PORT) -d $(DB_NAME)
 
+## Docker targets
+docker-build: ## Build docker image
+	$(DB_VARS) DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) API_PORT=$(API_PORT) docker-compose build api
+
+.PHONY: api-start
+api-start: docker-build ## Run docker container
+	$(DB_VARS) DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) API_PORT=$(API_PORT) docker-compose -f docker-compose.yaml up --detach api
+
+.PHONY: api-stop
+api-stop: ## Stop docker container
+	$(DB_VARS) DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) API_PORT=$(API_PORT) docker-compose -f docker-compose.yaml stop api
+
 ## Development targets
 .PHONY: dev
 dev: ## Run development server
-	DATABASE_URL=$(DB_URL) go run ./cmd/twitter
+	DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) go run ./cmd/twitter -port $(API_PORT)
 
 .PHONY: test
 test: ## Run tests
-	@$(DB_VARS) DATABASE_URL=$(DB_URL) go test -v ./...
+	go test -v ./...
+
+.PHONY: test_integration
+test_integration: ## Run integration tests
+	$(DB_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -v ./... -tags=integration
 
 # https://github.com/golang-migrate/migrate
 # brew install golang-migrate

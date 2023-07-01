@@ -10,11 +10,10 @@ import (
 )
 
 func open() (*sql.DB, error) {
-	dbURL := os.Getenv("DATABASE_URL")
-	fmt.Println("***** dbURL", dbURL)
+	dbURL := os.Getenv("DB_URL")
 
 	if dbURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL not set")
+		return nil, fmt.Errorf("DB_URL not set")
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -23,6 +22,7 @@ func open() (*sql.DB, error) {
 	}
 
 	boil.SetDB(db)
+	// boil.DebugMode = true
 	return db, err
 }
 

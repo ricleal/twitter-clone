@@ -1,9 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -14,9 +15,16 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 	"github.com/ricleal/twitter-clone/internal/service/store"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
+
+	ctx := context.Background()
+	ctx, err := InitLogFromEnv(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("Error initializing logging: %v", err))
+	}
 
 	var port = flag.Int("port", 8888, "Port for the HTTP server")
 	flag.Parse()
@@ -33,6 +41,7 @@ func main() {
 
 	////////
 	dbServer := postgres.New()
+	defer dbServer.Close()
 	store := store.NewSQLStore(dbServer.DB())
 	st := service.NewTweetService(store)
 	su := service.NewUserService(store)
@@ -49,10 +58,13 @@ func main() {
 	openapi.HandlerFromMux(twitterServer, r)
 
 	s := &http.Server{
-		Handler: r,
-		Addr:    fmt.Sprintf("127.0.0.1:%d", *port),
+		Handler:     r,
+		Addr:        fmt.Sprintf("127.0.0.1:%d", *port),
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
 	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
+	log.Ctx(ctx).Info().Int("port", *port).Msg("serving http on port")
+	log.Ctx(ctx).Fatal().Err(s.ListenAndServe()).Msg("http server quit")
+	// log.Fatal(s.ListenAndServe())
 }

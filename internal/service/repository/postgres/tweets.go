@@ -11,10 +11,16 @@ import (
 )
 
 type TweetServer struct {
-	Server
+	dbConn repository.DBTx
 }
 
-func (s *TweetServer) Create(ctx context.Context, t repository.Tweet) (err error) {
+func NewTweetServer(dbConn repository.DBTx) *TweetServer {
+	return &TweetServer{
+		dbConn: dbConn,
+	}
+}
+
+func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err error) {
 
 	tweet := orm.Tweet{
 		ID:      uuid.NewString(),
@@ -33,6 +39,10 @@ func (s *TweetServer) Create(ctx context.Context, t repository.Tweet) (err error
 func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 	ormTweets, err := orm.Tweets().All(ctx, s.dbConn)
 	if err != nil {
+		// Check if the error is a not found error
+		if err.Error() == "sql: no rows in result set" {
+			return nil, repository.ErrNotFound
+		}
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
 
@@ -51,6 +61,10 @@ func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 func (s *TweetServer) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
 	ormTweet, err := orm.FindTweet(ctx, s.dbConn, id)
 	if err != nil {
+		// Check if the error is a not found error
+		if err.Error() == "sql: no rows in result set" {
+			return nil, repository.ErrNotFound
+		}
 		return nil, fmt.Errorf("failed to find tweet by id: %w", err)
 	}
 

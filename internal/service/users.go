@@ -19,7 +19,7 @@ func validateEmail(email string) bool {
 }
 
 type UserService interface {
-	Create(ctx context.Context, u entities.User) error
+	Create(ctx context.Context, u *entities.User) error
 	FindAll(ctx context.Context) ([]entities.User, error)
 	FindByID(ctx context.Context, id string) (*entities.User, error)
 }
@@ -33,13 +33,13 @@ func NewUserService(store store.Store) *userService {
 	return &userService{repo}
 }
 
-func (s *userService) Create(ctx context.Context, u entities.User) error {
+func (s *userService) Create(ctx context.Context, u *entities.User) error {
 
 	if !validateEmail(u.Email) {
 		return entities.NewInvalidEmailError("invalid email address")
 	}
 
-	user := repository.User{
+	user := &repository.User{
 		Username: u.Username,
 		Email:    u.Email,
 		Name:     u.Name,
@@ -50,7 +50,10 @@ func (s *userService) Create(ctx context.Context, u entities.User) error {
 func (s *userService) FindAll(ctx context.Context) ([]entities.User, error) {
 	users, err := s.repo.FindAll(ctx)
 	if err != nil {
-		return nil, err
+		if err == repository.ErrNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("could not find users: %w", err)
 	}
 
 	var entUsers []entities.User
@@ -68,7 +71,10 @@ func (s *userService) FindAll(ctx context.Context) ([]entities.User, error) {
 func (s *userService) FindByID(ctx context.Context, id string) (*entities.User, error) {
 	u, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		if err == repository.ErrNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("could not find user: %w", err)
 	}
 
 	if u == nil {

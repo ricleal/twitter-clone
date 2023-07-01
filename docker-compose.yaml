@@ -19,3 +19,24 @@ services:
     volumes:
       - ./volumes/var/lib/postgresql:/var/lib/postgresql
       - ./volumes/var/log/postgresql:/var/log/postgresql
+  migrate:
+    image: migrate/migrate
+    volumes:
+        - .:/migrations
+    command: ["-path", "/migrations", "-database",  "${DB_URL}", "up"]
+    depends_on:
+      - postgres
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - migrate
+    command:
+      echo "Waiting for postgres... TODO RUN MIGRATIONS!!!"
+    environment:
+      DB_URL: ${DB_URL}
+      LOG_LEVEL: ${LOG_LEVEL}
+      API_PORT: ${API_PORT}
+    ports:
+      - ${API_PORT}:${API_PORT}

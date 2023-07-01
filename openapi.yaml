@@ -18,6 +18,12 @@ paths:
       responses:
         '201':
           description: User created successfully
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     get:
       summary: List all users
       responses:
@@ -29,6 +35,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /users/{id}:
     get:
       summary: Get user profile by ID
@@ -47,6 +59,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /tweets:
     post:
       summary: Create a tweet
@@ -59,6 +77,12 @@ paths:
       responses:
         '201':
           description: Tweet created successfully
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     get:
       summary: List all tweets
       responses:
@@ -70,6 +94,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Tweet'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /tweets/{id}:
     get:
       summary: Get tweet by ID
@@ -88,6 +119,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tweet'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     User:
@@ -114,9 +151,22 @@ components:
           format: uuid
         content:
           type: string
-        user:
+        user_id:
           type: string
           format: uuid
       required:
         - content
-        - user
+        - user_id
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+  

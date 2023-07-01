@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1
-
 ###############
 # Build stage #
 ###############
@@ -22,9 +21,10 @@ RUN go build -v -o /app/app ./cmd/twitter
 # Runtime stage #
 #################
 
-FROM alpine:3.18.2
+FROM ubuntu:22.04
 
 COPY --from=builder /app/app /app/
 
-EXPOSE 8888
-ENTRYPOINT [ "/app/app" ]
+EXPOSE ${API_PORT}
+
+ENTRYPOINT /app/app -port ${API_PORT}

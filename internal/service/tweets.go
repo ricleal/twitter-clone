@@ -9,8 +9,15 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
+func validateTweet(content string) error {
+	if len(content) > 280 {
+		return fmt.Errorf("tweet content is too long")
+	}
+	return nil
+}
+
 type TweetService interface {
-	Create(ctx context.Context, t entities.Tweet) error
+	Create(ctx context.Context, t *entities.Tweet) error
 	FindAll(ctx context.Context) ([]entities.Tweet, error)
 	FindByID(ctx context.Context, id string) (*entities.Tweet, error)
 }
@@ -23,7 +30,7 @@ func NewTweetService(store store.Store) *tweetService {
 	return &tweetService{store}
 }
 
-func (s *tweetService) Create(ctx context.Context, t entities.Tweet) error {
+func (s *tweetService) Create(ctx context.Context, t *entities.Tweet) error {
 
 	// open a transaction
 	if err := s.store.ExecTx(ctx, func(scopedStore store.Store) error {
@@ -36,7 +43,12 @@ func (s *tweetService) Create(ctx context.Context, t entities.Tweet) error {
 			return fmt.Errorf("user with id %s not found: %w", t.UserID.String(), err)
 		}
 
-		tweet := repository.Tweet{
+		// validate tweet
+		if err := validateTweet(t.Content); err != nil {
+			return fmt.Errorf("invalid tweet: %w", err)
+		}
+
+		tweet := &repository.Tweet{
 			Content: t.Content,
 			UserID:  t.UserID,
 		}
@@ -55,7 +67,10 @@ func (s *tweetService) FindAll(ctx context.Context) ([]entities.Tweet, error) {
 	repo := s.store.Tweets()
 	tweets, err := repo.FindAll(ctx)
 	if err != nil {
-		return nil, err
+		if err == repository.ErrNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
 
 	var entTweets []entities.Tweet
@@ -74,7 +89,10 @@ func (s *tweetService) FindByID(ctx context.Context, id string) (*entities.Tweet
 	repo := s.store.Tweets()
 	t, err := repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		if err == repository.ErrNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find tweet by id %s: %w", id, err)
 	}
 
 	if t == nil {
