@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ricleal/twitter-clone/internal/service/repository"
-	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
+	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
 
 type memStore struct {
@@ -17,11 +17,11 @@ func NewMemStore() *memStore {
 }
 
 func (s *memStore) Tweets() repository.TweetRepository {
-	return &postgres.TweetServer{}
+	return memory.NewTweetHandler()
 }
 
 func (s *memStore) Users() repository.UserRepository {
-	return &postgres.UserServer{}
+	return memory.NewUserHandler()
 }
 
 func (s *memStore) ExecTx(ctx context.Context, fn func(Store) error) error {

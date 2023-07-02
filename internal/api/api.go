@@ -11,6 +11,33 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service"
 )
 
+// 200 – OK
+// Everything is working, The resource has been fetched and is transmitted in the message body.
+
+// 201 – CREATED
+// A new resource has been created
+
+// 204 – NO CONTENT
+// The resource was successfully deleted, no response body
+
+// 304 – NOT MODIFIED
+// This is used for caching purposes. It tells the client that the response has not been modified, so the client can continue to use the same cached version of the response.
+
+// 400 – BAD REQUEST
+// The request was invalid or cannot be served. The exact error should be explained in the error payload.
+
+// 401 – UNAUTHORIZED
+// The request requires user authentication.
+
+// 403 – FORBIDDEN
+// The server understood the request but is refusing it or the access is not allowed.
+
+// 404 – NOT FOUND
+// There is no resource behind the URI.
+
+// 500 – INTERNAL SERVER ERROR API
+// If an error occurs in the global catch blog, the stack trace should be logged and not returned as a response.
+
 type twitterServer struct {
 	tweetService service.TweetService
 	userService  service.UserService
@@ -86,7 +113,7 @@ func (t *twitterServer) GetTweetsId(w http.ResponseWriter, r *http.Request, id u
 		return
 	}
 	if tweet == nil {
-		sendAPIError(ctx, w, http.StatusNotFound, "Tweet not found", nil)
+		sendAPIError(ctx, w, http.StatusNoContent, "Tweet not found", nil)
 		return
 	}
 
@@ -171,7 +198,7 @@ func (t *twitterServer) GetUsersId(w http.ResponseWriter, r *http.Request, id uu
 		return
 	}
 	if user == nil {
-		sendAPIError(ctx, w, http.StatusNotFound, "User not found", nil)
+		sendAPIError(ctx, w, http.StatusNoContent, "User not found", nil)
 		return
 	}
 
