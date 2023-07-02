@@ -1,6 +1,8 @@
+# Template for .env file
 # Export it as: export $(egrep -v '^#' .env | xargs)
 DB_HOSTNAME=localhost
 DB_PORT=5432
 DB_NAME=twitter
 DB_USERNAME=postgres
 DB_PASSWORD=Pass1234!
+API_PORT=8888

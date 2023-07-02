@@ -39,9 +39,10 @@ func (ts *PostgresTestSuite) TearDownTest() {
 }
 
 func (ts *PostgresTestSuite) TestPostgres() {
-	s := postgres.New()
+	s, err := postgres.NewHandler(ts.ctx)
+	require.NoError(ts.T(), err)
 	require.NotNil(ts.T(), s.DB())
-	err := s.DB().Ping()
+	err = s.DB().Ping()
 	require.NoError(ts.T(), err)
 
 	// check the existing tables

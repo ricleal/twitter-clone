@@ -10,6 +10,7 @@ import (
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httplog"
 	"github.com/ricleal/twitter-clone/internal/api"
 	"github.com/ricleal/twitter-clone/internal/api/openapi"
 	"github.com/ricleal/twitter-clone/internal/service"
@@ -26,7 +27,7 @@ func main() {
 		panic(fmt.Sprintf("Error initializing logging: %v", err))
 	}
 
-	var port = flag.Int("port", 8888, "Port for the HTTP server")
+	var port = flag.Int("port", 8889, "Port for the HTTP server")
 	flag.Parse()
 
 	swagger, err := openapi.GetSwagger()
@@ -39,8 +40,11 @@ func main() {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	////////
-	dbServer := postgres.New()
+	// Set up our data store
+	dbServer, err := postgres.NewHandler(ctx)
+	if err != nil {
+		log.Ctx(ctx).Fatal().Err(err).Msg("error connecting to database")
+	}
 	defer dbServer.Close()
 	store := store.NewSQLStore(dbServer.DB())
 	st := service.NewTweetService(store)
@@ -54,12 +58,19 @@ func main() {
 	// OpenAPI schema.
 	r.Use(middleware.OapiRequestValidator(swagger))
 
-	// We now register our petStore above as the handler for the interface
+	// Middleware logging
+	// Logger
+	logger := httplog.NewLogger("httplog-example", httplog.Options{
+		JSON: true,
+	})
+	r.Use(httplog.RequestLogger(logger))
+
+	// register the http handlers
 	openapi.HandlerFromMux(twitterServer, r)
 
 	s := &http.Server{
 		Handler:     r,
-		Addr:        fmt.Sprintf("127.0.0.1:%d", *port),
+		Addr:        fmt.Sprintf(":%d", *port),
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 

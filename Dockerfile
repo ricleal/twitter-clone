@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+
 ###############
 # Build stage #
 ###############
@@ -22,6 +23,8 @@ RUN go build -v -o /app/app ./cmd/twitter
 #################
 
 FROM ubuntu:22.04
+
+ARG API_PORT=8888
 
 COPY --from=builder /app/app /app/
 

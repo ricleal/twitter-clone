@@ -5,23 +5,22 @@ DB_NAME ?= twitter
 DB_USERNAME ?= postgres
 DB_PASSWORD ?= Pass1234!
 
+DB_URL ?= "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOSTNAME):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
 
-DB_VARS = \
+MIGRATIONS_PATH ?= $(shell pwd)/migrations
+
+LOG_LEVEL ?= debug
+API_PORT ?= 8888
+
+ENV_VARS = \
 	DB_HOSTNAME=$(DB_HOSTNAME) \
 	DB_PORT=$(DB_PORT) \
 	DB_NAME=$(DB_NAME) \
 	DB_USERNAME=$(DB_USERNAME) \
 	DB_PASSWORD=$(DB_PASSWORD) \
+	LOG_LEVEL=$(LOG_LEVEL) \
+	API_PORT=$(API_PORT) \
 	$(NULL)
-
-
-DB_URL ?= "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOSTNAME):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
-
-# Cwd + path to migrations
-MIGRATIONS_PATH ?= $(shell pwd)/migrations
-
-LOG_LEVEL ?= debug
-API_PORT ?= 8888
 
 ## OpenAPI targets
 # Install: go install "github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest"
@@ -42,15 +41,16 @@ openapi-generate: ## Generate OpenAPI client
 		-package openapi \
 		-o internal/api/openapi/spec.go \
 		openapi.yaml
+#
 ## DB targets
 
 .PHONY: db-start
 db-start: ## Postgres start
-	@$(DB_VARS) docker-compose -f docker-compose.yaml up --detach postgres
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --detach postgres
 
 .PHONY: db-stop
 db-stop: ## Postgres stop
-	@$(DB_VARS) docker-compose -f docker-compose.yaml stop postgres
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml stop postgres
 
 .PHONY: db-cli
 db-cli: ## Postgres CLI
@@ -58,19 +58,23 @@ db-cli: ## Postgres CLI
 	@PGPASSWORD='$(DB_PASSWORD)' \
 		pgcli -h $(DB_HOSTNAME) -u $(DB_USERNAME) -p $(DB_PORT) -d $(DB_NAME)
 
+#
 ## Docker targets
+
 docker-build: ## Build docker image
-	$(DB_VARS) DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) API_PORT=$(API_PORT) docker-compose build api
+	$(ENV_VARS) docker-compose -f docker-compose.yaml build api
 
 .PHONY: api-start
 api-start: docker-build ## Run docker container
-	$(DB_VARS) DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) API_PORT=$(API_PORT) docker-compose -f docker-compose.yaml up --detach api
+	$(ENV_VARS) docker-compose -f docker-compose.yaml up --detach api
 
 .PHONY: api-stop
 api-stop: ## Stop docker container
-	$(DB_VARS) DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) API_PORT=$(API_PORT) docker-compose -f docker-compose.yaml stop api
+	$(ENV_VARS) docker-compose -f docker-compose.yaml stop api
 
+#
 ## Development targets
+
 .PHONY: dev
 dev: ## Run development server
 	DB_URL=$(DB_URL) LOG_LEVEL=$(LOG_LEVEL) go run ./cmd/twitter -port $(API_PORT)
@@ -81,7 +85,7 @@ test: ## Run tests
 
 .PHONY: test_integration
 test_integration: ## Run integration tests
-	$(DB_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -v ./... -tags=integration
+	$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -v ./... -tags=integration
 
 # https://github.com/golang-migrate/migrate
 # brew install golang-migrate

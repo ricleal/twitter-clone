@@ -19,24 +19,45 @@ services:
     volumes:
       - ./volumes/var/lib/postgresql:/var/lib/postgresql
       - ./volumes/var/log/postgresql:/var/log/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} --dbname ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - pgdata
+
   migrate:
     image: migrate/migrate
     volumes:
-        - .:/migrations
-    command: ["-path", "/migrations", "-database",  "${DB_URL}", "up"]
+      - ./migrations:/migrations
+    command: [
+      "-path", "/migrations", 
+      "-database", "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=disable",
+      "up"
+      ]
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - pgdata
+
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - API_PORT=${API_PORT}
     depends_on:
       - migrate
-    command:
-      echo "Waiting for postgres... TODO RUN MIGRATIONS!!!"
     environment:
-      DB_URL: ${DB_URL}
+      DB_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=disable"
       LOG_LEVEL: ${LOG_LEVEL}
       API_PORT: ${API_PORT}
     ports:
       - ${API_PORT}:${API_PORT}
+    networks:
+      - pgdata
+
+networks:
+  pgdata: {}
