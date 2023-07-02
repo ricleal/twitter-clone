@@ -38,9 +38,12 @@ func (s *tweetService) Create(ctx context.Context, t *entities.Tweet) error {
 		userRepo := scopedStore.Users()
 
 		// check if user exists
-		user, err := userRepo.FindByID(ctx, t.UserID.String())
-		if err != nil || user == nil {
-			return fmt.Errorf("user with id %s not found: %w", t.UserID.String(), err)
+		_, err := userRepo.FindByID(ctx, t.UserID.String())
+		if err != nil {
+			if err == repository.ErrNotFound {
+				return entities.ErrInvalidUserID
+			}
+			return fmt.Errorf("error finding user: %w", err)
 		}
 
 		// validate tweet

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package api_test
 
 import (
@@ -63,13 +60,13 @@ func (ts *APITestSuite) TestCreateAndGetUser() {
 
 	userStr := `{ "username": "foo", "name": "John Doe", "email": "jd@mail.com" }`
 	var userID string
-	{
+	ts.Run("Create user", func() {
 		var response struct{}
 		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/users", userStr, &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusCreated, statusCode)
-	}
-	{
+	})
+	ts.Run("Get users", func() {
 		var response []map[string]interface{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 		ts.Require().NoError(err)
@@ -79,8 +76,8 @@ func (ts *APITestSuite) TestCreateAndGetUser() {
 		ts.Require().Equal("John Doe", response[0]["name"])
 		ts.Require().Equal("jd@mail.com", response[0]["email"])
 		userID = response[0]["id"].(string)
-	}
-	{
+	})
+	ts.Run("Get user", func() {
 		var response map[string]interface{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users/"+userID, &response)
 		ts.Require().NoError(err)
@@ -88,15 +85,13 @@ func (ts *APITestSuite) TestCreateAndGetUser() {
 		ts.Require().Equal("foo", response["username"])
 		ts.Require().Equal("John Doe", response["name"])
 		ts.Require().Equal("jd@mail.com", response["email"])
-	}
-	{
-		// invalid user id
+	})
+	ts.Run("Get invalid user", func() {
 		var response struct{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users/"+uuid.NewString(), &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusNoContent, statusCode)
-	}
-
+	})
 }
 
 func (ts *APITestSuite) TestCreateAndGetTweets() {
@@ -104,25 +99,72 @@ func (ts *APITestSuite) TestCreateAndGetTweets() {
 
 	userStr := `{ "username": "foo", "name": "John Doe", "email": "jd@mail.com" }`
 	var userID string
-	{
+
+	ts.Run("Create user", func() {
 		var response struct{}
 		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/users", userStr, &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusCreated, statusCode)
-	}
-	{
+	})
+	ts.Run("Get users", func() {
 		var response []map[string]interface{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusOK, statusCode)
 		userID = response[0]["id"].(string)
-	}
-	{
+	})
+	ts.Run("Create tweet", func() {
 		tweetStr := `{ "user_id": "` + userID + `", "content": "Hello World" }`
 		var response struct{}
 		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/tweets", tweetStr, &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusCreated, statusCode)
-
-	}
+	})
+	ts.Run("Create tweet invalid user", func() {
+		// invalid user id
+		tweetStr := `{ "user_id": "` + uuid.NewString() + `", "content": "Hello World" }`
+		var response struct{}
+		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/tweets", tweetStr, &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusNoContent, statusCode)
+	})
+	var tweetID string
+	ts.Run("Get tweets", func() {
+		var response []openapi.Tweet
+		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/tweets", &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusOK, statusCode)
+		ts.Require().Len(response, 1)
+		ts.Require().Equal("Hello World", response[0].Content)
+		tweetID = response[0].Id.String()
+	})
+	ts.Run("Create tweet 2", func() {
+		tweetStr := `{ "user_id": "` + userID + `", "content": "Hello World 2" }`
+		var response struct{}
+		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/tweets", tweetStr, &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusCreated, statusCode)
+	})
+	ts.Run("Get tweets", func() {
+		var response []openapi.Tweet
+		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/tweets", &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusOK, statusCode)
+		ts.Require().Len(response, 2)
+		ts.Require().Equal("Hello World", response[0].Content)
+		ts.Require().Equal("Hello World 2", response[1].Content)
+	})
+	ts.Run("Get tweet", func() {
+		var response openapi.Tweet
+		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/tweets/"+tweetID, &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusOK, statusCode)
+		ts.Require().Equal("Hello World", response.Content)
+	})
+	ts.Run("Get invalid tweet", func() {
+		var response struct{}
+		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/tweets/"+uuid.NewString(), &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusNoContent, statusCode)
+	})
 }

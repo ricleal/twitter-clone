@@ -85,7 +85,7 @@ test: ## Run tests
 
 .PHONY: test_integration
 test_integration: ## Run integration tests
-	$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -v ./... -tags=integration
+	$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
 
 # https://github.com/golang-migrate/migrate
 # brew install golang-migrate

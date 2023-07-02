@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
@@ -95,6 +96,10 @@ func (t *twitterServer) PostTweets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := t.tweetService.Create(ctx, tweet); err != nil {
+		if errors.Is(err, entities.ErrInvalidUserID) {
+			sendAPIError(ctx, w, http.StatusNoContent, "Invalid user ID", err)
+			return
+		}
 		sendAPIError(ctx, w, http.StatusInternalServerError, "Error creating tweet", err)
 		return
 	}

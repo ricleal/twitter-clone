@@ -36,7 +36,7 @@ func NewUserService(store store.Store) *userService {
 func (s *userService) Create(ctx context.Context, u *entities.User) error {
 
 	if !validateEmail(u.Email) {
-		return entities.NewInvalidEmailError("invalid email address")
+		return entities.ErrInvalidEmail
 	}
 
 	user := &repository.User{
