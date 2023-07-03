@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -17,11 +18,41 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ricleal/twitter-clone/internal/api"
-	"github.com/ricleal/twitter-clone/internal/api/openapi"
+	"github.com/ricleal/twitter-clone/internal/api/openapiv1"
 	"github.com/ricleal/twitter-clone/internal/service"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
+
+func openAPIRouter(root *chi.Mux, twitterServer *api.TwitterAPI) *chi.Mux {
+
+	swagger, err := openapiv1.GetSwagger()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		os.Exit(1)
+	}
+
+	// Clear out the servers array in the swagger spec, that skips validating
+	// that server names match. We don't know how this thing will be run.
+	swagger.Servers = nil
+
+	r := chi.NewRouter()
+	r.Use(oapiMiddleware.OapiRequestValidator(swagger))
+
+	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterServer, r)))
+
+	apiJSON, _ := json.Marshal(swagger)
+	root.Get("/api/v1/api.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(apiJSON)
+	})
+
+	return r
+
+}
 
 func main() {
 	ctx := context.Background()
@@ -42,7 +73,7 @@ func main() {
 	s := store.NewSQLStore(dbServer.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
-	twitterServer := api.New(su, st)
+	twitterAPI := api.New(su, st)
 
 	// Set up router
 	root := chi.NewRouter()
@@ -50,11 +81,7 @@ func main() {
 	root.Use(middleware.Recoverer)
 	root.Use(middleware.StripSlashes)
 
-	root.Mount("/v1", http.StripPrefix("/v1", openapi.Handler(twitterServer)))
-
-	// apiRouter := openAPIRouter()
-	// openapi.HandlerFromMux(twitterServer, apiRouter)
-	// root.Mount("/api", apiRouter)
+	openAPIRouter(root, twitterAPI)
 
 	// TODO: Delete this
 	// DEBUG: Print out all routes
@@ -71,25 +98,6 @@ func main() {
 	if err := serve(ctx, root, *port); err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error serving http")
 	}
-
-}
-
-func openAPIRouter() *chi.Mux {
-
-	swagger, err := openapi.GetSwagger()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
-		os.Exit(1)
-	}
-
-	// Clear out the servers array in the swagger spec, that skips validating
-	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
-
-	r := chi.NewRouter()
-	r.Use(oapiMiddleware.OapiRequestValidator(swagger))
-
-	return r
 
 }
 

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ricleal/twitter-clone/internal/api"
-	"github.com/ricleal/twitter-clone/internal/api/openapi"
+	openapi "github.com/ricleal/twitter-clone/internal/api/openapiv1"
 	"github.com/ricleal/twitter-clone/internal/service"
 	"github.com/ricleal/twitter-clone/internal/service/store"
 	"github.com/ricleal/twitter-clone/testhelpers"

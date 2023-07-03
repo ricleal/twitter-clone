@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/ricleal/twitter-clone/internal/api/openapi"
+	openapi "github.com/ricleal/twitter-clone/internal/api/openapiv1"
 )
 
 // This function wraps sending of an error in the Error format, and

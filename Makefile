@@ -22,26 +22,7 @@ ENV_VARS = \
 	API_PORT=$(API_PORT) \
 	$(NULL)
 
-## OpenAPI targets
-# Install: go install "github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest"
-.PHONY: openapi-generate
-openapi-generate: ## Generate OpenAPI client
-	oapi-codegen \
-		-generate types \
-		-package openapi \
-		-o internal/api/openapi/types.go \
-		openapi.yaml
-	oapi-codegen \
-		-generate chi-server \
-		-package openapi \
-		-o internal/api/openapi/chi.go \
-		openapi.yaml
-	oapi-codegen \
-		-generate spec \
-		-package openapi \
-		-o internal/api/openapi/spec.go \
-		openapi.yaml
-#
+
 ## DB targets
 
 .PHONY: db-start
@@ -106,6 +87,29 @@ db-migrate-version:  ## print the current migration version
 	migrate -verbose -database $(DB_URL) -path migrations version
 
 #### Code generation ####
+
+## OpenAPI targets
+# Install: go install "github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest"
+.PHONY: openapi-generate
+openapi-generate: ## Generate OpenAPI client
+	mkdir -p internal/api/openapiv1
+	oapi-codegen \
+		-generate types \
+		-package openapiv1 \
+		-o internal/api/openapiv1/types.go \
+		openapi.yaml
+	oapi-codegen \
+		-generate chi-server \
+		-package openapiv1 \
+		-o internal/api/openapiv1/chi.go \
+		openapi.yaml
+	oapi-codegen \
+		-generate spec \
+		-package openapiv1 \
+		-o internal/api/openapiv1/spec.go \
+		openapi.yaml
+
+### DB ORM targets
 # go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
 # go install github.com/volatiletech/sqlboiler/v4@latest
 .PHONY: db-orm-models
