@@ -54,7 +54,7 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 	return container, nil
 }
 
-func setupMigrations(ctx context.Context) error {
+func setupMigrations(_ context.Context) error {
 	dbURL := os.Getenv("DB_URL")
 
 	if dbURL == "" {

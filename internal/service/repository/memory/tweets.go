@@ -8,11 +8,13 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 )
 
+// TweetHandler is a mock implementation of the repository.TweetServer interface.
 type TweetHandler struct {
 	Handler
 }
 
-func (s *TweetHandler) Create(ctx context.Context, t *repository.Tweet) (err error) {
+// Create creates a new tweet.
+func (s *TweetHandler) Create(_ context.Context, t *repository.Tweet) (err error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 	t.ID = uuid.New()
@@ -20,16 +22,15 @@ func (s *TweetHandler) Create(ctx context.Context, t *repository.Tweet) (err err
 	return nil
 }
 
-func (s *TweetHandler) FindAll(ctx context.Context) ([]repository.Tweet, error) {
+// FindAll returns all tweets.
+func (s *TweetHandler) FindAll(_ context.Context) ([]repository.Tweet, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
-	if len(s.Tweets) == 0 {
-		return nil, repository.ErrNotFound
-	}
 	return s.Tweets, nil
 }
 
-func (s *TweetHandler) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
+// FindByID returns a tweet by ID.
+func (s *TweetHandler) FindByID(_ context.Context, id string) (*repository.Tweet, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 	for _, t := range s.Tweets {
@@ -41,6 +42,7 @@ func (s *TweetHandler) FindByID(ctx context.Context, id string) (*repository.Twe
 	return nil, repository.ErrNotFound
 }
 
+// NewTweetHandler returns a new TweetHandler.
 func NewTweetHandler() *TweetHandler {
 	return &TweetHandler{}
 }

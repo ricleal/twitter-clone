@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// InitLog initializes the logger in the context with the given log level.
 func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
 	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {

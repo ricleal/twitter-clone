@@ -12,6 +12,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
+// open opens a connection to the database.
 func open(ctx context.Context) (*sql.DB, error) {
 	dbURL := os.Getenv("DB_URL")
 
@@ -31,18 +32,22 @@ func open(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
+// Handler is struct that holds the database connection.
 type Handler struct {
 	dbConn *sql.DB
 }
 
+// Close closes the database connection.
 func (s *Handler) Close() error {
-	return s.dbConn.Close()
+	return s.dbConn.Close() //nolint:wrapcheck //no need to wrap here
 }
 
+// DB returns the database connection.
 func (s *Handler) DB() *sql.DB {
 	return s.dbConn
 }
 
+// NewHandler returns a new Handler with a database connection.
 func NewHandler(ctx context.Context) (*Handler, error) {
 	db, err := open(ctx)
 	if err != nil {

@@ -21,7 +21,6 @@ import (
 type StoreTestSuite struct {
 	suite.Suite
 	container *testcontainers.PostgresContainer
-	ctx       context.Context
 	s         *postgres.Handler
 }
 
@@ -33,35 +32,37 @@ func TestStoreTestSuite(t *testing.T) {
 
 func (ts *StoreTestSuite) SetupTest() {
 	var err error
-	ts.ctx = context.Background()
-	ts.container, err = test.SetupDB(ts.ctx)
+	ctx := context.Background()
+	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
-	ts.s, err = postgres.NewHandler(ts.ctx)
+	ts.s, err = postgres.NewHandler(ctx)
 	require.NoError(ts.T(), err)
 }
 
 func (ts *StoreTestSuite) TearDownTest() {
-	err := test.TeardownDB(ts.ctx, ts.container)
+	ctx := context.Background()
+	err := test.TeardownDB(ctx, ts.container)
 	require.NoError(ts.T(), err)
 	ts.s.Close()
 }
 
 func (ts *StoreTestSuite) TestData() {
+	ctx := context.Background()
 	s := store.NewSQLStore(ts.s.DB())
 
-	if err := s.ExecTx(ts.ctx, func(s store.Store) error {
+	if err := s.ExecTx(ctx, func(s store.Store) error {
 		tweetsRepo := s.Tweets()
 		usersRepo := s.Users()
 
 		// create a user
-		err := usersRepo.Create(ts.ctx, &repository.User{
+		err := usersRepo.Create(ctx, &repository.User{
 			Username: "test",
 			Email:    "test@test.com",
 		})
 		ts.Require().NoError(err)
 
 		// Find user by Username
-		user, err := usersRepo.FindByUsername(ts.ctx, "test")
+		user, err := usersRepo.FindByUsername(ctx, "test")
 		ts.Require().NoError(err)
 		ts.Require().Equal("test", user.Username)
 
@@ -70,11 +71,11 @@ func (ts *StoreTestSuite) TestData() {
 			UserID:  user.ID,
 			Content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		}
-		err = tweetsRepo.Create(ts.ctx, tweet)
+		err = tweetsRepo.Create(ctx, tweet)
 		ts.Require().NoError(err)
 
 		// Find all tweets
-		tweets, err := tweetsRepo.FindAll(ts.ctx)
+		tweets, err := tweetsRepo.FindAll(ctx)
 		ts.Require().NoError(err)
 		ts.Require().Len(tweets, 1)
 		return nil

@@ -13,16 +13,19 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
 )
 
+// TweetServer is a postgres implementation of the repository.TweetServer interface.
 type TweetServer struct {
 	dbConn repository.DBTx
 }
 
+// NewTweetServer returns a new TweetServer.
 func NewTweetServer(dbConn repository.DBTx) *TweetServer {
 	return &TweetServer{
 		dbConn: dbConn,
 	}
 }
 
+// Create creates a new tweet.
 func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err error) {
 	tweet := orm.Tweet{
 		ID:      uuid.NewString(),
@@ -38,6 +41,7 @@ func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err erro
 	return nil
 }
 
+// FindAll returns all tweets.
 func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 	ormTweets, err := orm.Tweets().All(ctx, s.dbConn)
 	if err != nil {
@@ -56,6 +60,7 @@ func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 	return tweets, nil
 }
 
+// FindByID returns a tweet by ID.
 func (s *TweetServer) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
 	ormTweet, err := orm.FindTweet(ctx, s.dbConn, id)
 	if err != nil {

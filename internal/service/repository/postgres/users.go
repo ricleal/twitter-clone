@@ -14,16 +14,19 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
 )
 
+// UserServer is a postgres implementation of the repository.UserServer interface.
 type UserServer struct {
 	dbConn repository.DBTx
 }
 
+// NewUserServer returns a new UserServer.
 func NewUserServer(dbConn repository.DBTx) *UserServer {
 	return &UserServer{
 		dbConn: dbConn,
 	}
 }
 
+// Create creates a new user.
 func (s *UserServer) Create(ctx context.Context, u *repository.User) error {
 	user := orm.User{
 		ID:       uuid.NewString(),
@@ -40,13 +43,14 @@ func (s *UserServer) Create(ctx context.Context, u *repository.User) error {
 	return nil
 }
 
+// FindAll returns all users.
 func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
 	ormUsers, err := orm.Users().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all users: %w", err)
 	}
 
-	var users []repository.User
+	users := make([]repository.User, 0, len(ormUsers))
 	for _, u := range ormUsers {
 		users = append(users, repository.User{
 			ID:       uuid.MustParse(u.ID),
@@ -59,6 +63,7 @@ func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
 	return users, nil
 }
 
+// FindByID returns a user by ID.
 func (s *UserServer) FindByID(ctx context.Context, id string) (*repository.User, error) {
 	ormUser, err := orm.FindUser(ctx, s.dbConn, id)
 	if err != nil {
@@ -77,6 +82,7 @@ func (s *UserServer) FindByID(ctx context.Context, id string) (*repository.User,
 	}, nil
 }
 
+// FindByUsername returns a user by username.
 func (s *UserServer) FindByUsername(ctx context.Context, username string) (*repository.User, error) {
 	ormUser, err := orm.Users(orm.UserWhere.Username.EQ(username)).One(ctx, s.dbConn)
 	if err != nil {
@@ -95,6 +101,7 @@ func (s *UserServer) FindByUsername(ctx context.Context, username string) (*repo
 	}, nil
 }
 
+// FindByEmail returns a user by email.
 func (s *UserServer) FindByEmail(ctx context.Context, email string) (*repository.User, error) {
 	ormUser, err := orm.Users(orm.UserWhere.Email.EQ(email)).One(ctx, s.dbConn)
 	if err != nil {

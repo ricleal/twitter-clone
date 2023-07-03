@@ -13,7 +13,7 @@ type memStore struct {
 	tweets           repository.TweetRepository
 }
 
-// New creates a new memory store.
+// NewMemStore creates a new memory store.
 func NewMemStore() *memStore {
 	// Note that we are using the memory repository implementations here.
 	// When we use Tweets() or Users() we are returning the current memory repository
@@ -31,7 +31,7 @@ func (s *memStore) Users() repository.UserRepository {
 	return s.users
 }
 
-func (s *memStore) ExecTx(ctx context.Context, fn func(Store) error) error {
+func (s *memStore) ExecTx(_ context.Context, fn func(Store) error) error {
 	if s.TransactionError {
 		return NewExecTxError("a transaction related error occurred")
 	}

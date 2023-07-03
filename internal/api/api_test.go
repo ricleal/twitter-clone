@@ -74,7 +74,7 @@ func (ts *APITestSuite) TestCreateAndGetUser() {
 		ts.Require().Equal("foo", response[0]["username"])
 		ts.Require().Equal("John Doe", response[0]["name"])
 		ts.Require().Equal("jd@mail.com", response[0]["email"])
-		userID = response[0]["id"].(string) //nolint:errcheck // we know it's there
+		userID = response[0]["id"].(string) //nolint:errcheck,forcetypeassert  // this is a test
 	})
 	ts.Run("Get user", func() {
 		var response map[string]interface{}
@@ -110,7 +110,7 @@ func (ts *APITestSuite) TestCreateAndGetTweets() {
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusOK, statusCode)
-		userID = response[0]["id"].(string) //nolint:errcheck // we know it's there
+		userID = response[0]["id"].(string) //nolint:errcheck,forcetypeassert  // this is a test
 	})
 	ts.Run("Create tweet", func() {
 		tweetStr := `{ "user_id": "` + userID + `", "content": "Hello World" }`

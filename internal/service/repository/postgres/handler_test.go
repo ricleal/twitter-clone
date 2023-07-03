@@ -19,7 +19,6 @@ import (
 type PostgresTestSuite struct {
 	suite.Suite
 	container *testcontainers.PostgresContainer
-	ctx       context.Context
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -30,18 +29,20 @@ func TestPostgresTestSuite(t *testing.T) {
 
 func (ts *PostgresTestSuite) SetupTest() {
 	var err error
-	ts.ctx = context.Background()
-	ts.container, err = test.SetupDB(ts.ctx)
+	ctx := context.Background()
+	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
 }
 
 func (ts *PostgresTestSuite) TearDownTest() {
-	err := test.TeardownDB(ts.ctx, ts.container)
+	ctx := context.Background()
+	err := test.TeardownDB(ctx, ts.container)
 	require.NoError(ts.T(), err)
 }
 
 func (ts *PostgresTestSuite) TestPostgres() {
-	s, err := postgres.NewHandler(ts.ctx)
+	ctx := context.Background()
+	s, err := postgres.NewHandler(ctx)
 	require.NoError(ts.T(), err)
 	require.NotNil(ts.T(), s.DB())
 	err = s.DB().Ping()
@@ -50,8 +51,9 @@ func (ts *PostgresTestSuite) TestPostgres() {
 	// check the existing tables
 	rows, err := s.DB().Query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
 	require.NoError(ts.T(), err)
+	require.NoError(ts.T(), rows.Err())
 	defer rows.Close()
-	var tables []string
+	var tables []string //nolint:prealloc // this is a test
 	for rows.Next() {
 		var table string
 		err := rows.Scan(&table)

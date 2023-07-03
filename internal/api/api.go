@@ -18,6 +18,7 @@ type twitterServer struct {
 	userService  service.UserService
 }
 
+// New returns a new twitterServer with the given services.
 func New(userService service.UserService, tweetService service.TweetService) *twitterServer {
 	return &twitterServer{
 		tweetService: tweetService,
@@ -40,10 +41,11 @@ func (t *twitterServer) GetTweets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var openapiTweets []openapi.Tweet
+	openapiTweets := make([]openapi.Tweet, 0, len(tweets))
 	for _, tweet := range tweets {
+		tweetID := tweet.ID
 		openapiTweets = append(openapiTweets, openapi.Tweet{
-			Id:      &tweet.ID,
+			Id:      &tweetID,
 			Content: tweet.Content,
 			UserId:  tweet.UserID,
 		})
@@ -82,7 +84,7 @@ func (t *twitterServer) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 // Get tweet by ID
 // (GET /tweets/{id}).
-func (t *twitterServer) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+func (t *twitterServer) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
 	ctx := r.Context()
 
 	tweet, err := t.tweetService.FindByID(ctx, id.String())
@@ -120,15 +122,17 @@ func (t *twitterServer) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// convert entity.User to openapi.User
-	var openapiUsers []*openapi.User
+	openapiUsers := make([]*openapi.User, 0, len(users))
 	for _, user := range users {
+		userID := user.ID
 		openapiUsers = append(openapiUsers, &openapi.User{
-			Id:       &user.ID,
+			Id:       &userID,
 			Username: user.Username,
 			Email:    openapi_types.Email(user.Email),
 		})
 		if user.Name != "" {
-			openapiUsers[len(openapiUsers)-1].Name = &user.Name
+			userName := user.Name
+			openapiUsers[len(openapiUsers)-1].Name = &userName
 		}
 	}
 
@@ -166,7 +170,7 @@ func (t *twitterServer) PostUsers(w http.ResponseWriter, r *http.Request) {
 
 // Get user profile by ID
 // (GET /users/{id}).
-func (t *twitterServer) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+func (t *twitterServer) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
 	ctx := r.Context()
 
 	user, err := t.userService.FindByID(ctx, id.String())
