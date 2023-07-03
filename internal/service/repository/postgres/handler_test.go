@@ -40,7 +40,7 @@ func (ts *PostgresTestSuite) TearDownTest() {
 	require.NoError(ts.T(), err)
 }
 
-// This tests only that the connection to the DB is working and also the migrations
+// This tests only that the connection to the DB is working and also the migrations.
 func (ts *PostgresTestSuite) TestPostgres() {
 	ctx := context.Background()
 	s, err := postgres.NewStorage(ctx)

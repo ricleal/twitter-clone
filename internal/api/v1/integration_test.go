@@ -186,3 +186,19 @@ func (ts *APITestIntegrationSuite) TestCreateAndGetTweets() {
 		ts.Require().Equal(http.StatusNoContent, statusCode)
 	})
 }
+
+func (ts *APITestIntegrationSuite) TestError() {
+	ctx := context.Background()
+
+	// let's close the database connection to force an error
+	ts.s.Close()
+
+	ts.Run("Get users", func() {
+		var response map[string]interface{}
+		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusInternalServerError, statusCode)
+		ts.Require().Equal("Error listing users", response["message"])
+		ts.Require().Equal(float64(500), response["code"])
+	})
+}

@@ -49,7 +49,8 @@ services:
       args:
         - API_PORT=${API_PORT}
     depends_on:
-      - migrate
+      migrate:
+        condition: service_completed_successfully
     environment:
       DB_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}?sslmode=disable"
       LOG_LEVEL: ${LOG_LEVEL}

@@ -85,7 +85,7 @@ func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 // Get tweet by ID
 // (GET /tweets/{id}).
-func (t *twitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
+func (t *twitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:revive,stylecheck //methods are generated
 	ctx := r.Context()
 
 	tweet, err := t.tweetService.FindByID(ctx, id.String())
@@ -171,7 +171,7 @@ func (t *twitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
 
 // Get user profile by ID
 // (GET /users/{id}).
-func (t *twitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
+func (t *twitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:revive,stylecheck //methods are generated
 	ctx := r.Context()
 
 	user, err := t.userService.FindByID(ctx, id.String())

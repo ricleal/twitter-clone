@@ -1,5 +1,20 @@
 # Twitter Clone
 
+## Objective
+
+> Implement a Twitter clone. Write a simple web service in Go that has the following API endpoints:
+> 
+> 1. Create a user.
+> 2. List all users.
+> 3. Get user profile by ID.
+> 4. Create a tweet.
+> 5. List all tweets.
+> 6. Get tweet by ID.
+> 
+> No need to implement any auth logic or UI parts. The main focus should be on the code structure and its extensibility like adding new entities to the system (e.g., followers, replies, bookmarks, etc).
+> The service should have a persistent storage layer (e.g., a Postgres DB). It's ok to use web frameworks and/or ORM libraries, but please don't overdo.
+> No problem with using chatgpt/copilot for this exercise.
+
 ## Architecture
 
 ### Backend
