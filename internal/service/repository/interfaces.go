@@ -5,6 +5,7 @@ import (
 	"database/sql"
 )
 
+// UserRepository represents a repository for users.
 type UserRepository interface {
 	FindAll(ctx context.Context) ([]User, error)
 	Create(ctx context.Context, p *User) error
@@ -13,12 +14,14 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*User, error)
 }
 
+// TweetRepository represents a repository for tweets.
 type TweetRepository interface {
 	FindAll(ctx context.Context) ([]Tweet, error)
 	Create(ctx context.Context, t *Tweet) error
 	FindByID(ctx context.Context, id string) (*Tweet, error)
 }
 
+// DBTx represents a database transaction or connection interface.
 type DBTx interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)

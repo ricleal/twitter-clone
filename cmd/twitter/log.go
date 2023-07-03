@@ -11,7 +11,6 @@ import (
 )
 
 func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
-
 	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {
 		return nil, fmt.Errorf("invalid log level: %s", logLevel)

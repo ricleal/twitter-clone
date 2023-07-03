@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -11,13 +12,13 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgMigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/rs/zerolog/log"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
-
 	dbname := os.Getenv("DB_NAME") + "_test"
 	user := os.Getenv("DB_USERNAME")
 	password := os.Getenv("DB_PASSWORD")
@@ -29,7 +30,8 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 		postgres.WithUsername(user),
 		postgres.WithPassword(password),
 		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(5*time.Second),
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).WithStartupTimeout(5*time.Second),
 		),
 	)
 	if err != nil {
@@ -48,6 +50,7 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, hostIP, mappedPort.Port(), dbname)
 	os.Setenv("DB_URL", uri)
+	log.Debug().Str("uri", uri).Msg("postgres test container running")
 	return container, nil
 }
 
@@ -75,14 +78,19 @@ func setupMigrations(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
-	m.Up()
+	err = m.Up()
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
 	err = db.Close()
 	if err != nil {
 		return fmt.Errorf("failed to close database: %w", err)
 	}
+	log.Info().Msg("migrations ran successfully")
 	return nil
 }
 
+// SetupDB sets up a postgres container and runs migrations.
 func SetupDB(ctx context.Context) (*postgres.PostgresContainer, error) {
 	container, err := setupContainer(ctx)
 	if err != nil {
@@ -95,6 +103,7 @@ func SetupDB(ctx context.Context) (*postgres.PostgresContainer, error) {
 	return container, nil
 }
 
+// TeardownDB terminates the postgres container.
 func TeardownDB(ctx context.Context, container *postgres.PostgresContainer) error {
 	err := container.Terminate(ctx)
 	if err != nil {

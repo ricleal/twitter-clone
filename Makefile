@@ -62,15 +62,15 @@ db-cli: ## Postgres CLI
 ## Docker targets
 
 docker-build: ## Build docker image
-	$(ENV_VARS) docker-compose -f docker-compose.yaml build api
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml build api
 
 .PHONY: api-start
 api-start: docker-build ## Run docker container
-	$(ENV_VARS) docker-compose -f docker-compose.yaml up --detach api
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --detach api
 
 .PHONY: api-stop
 api-stop: ## Stop docker container
-	$(ENV_VARS) docker-compose -f docker-compose.yaml stop api
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml stop api
 
 #
 ## Development targets
@@ -85,7 +85,14 @@ test: ## Run tests
 
 .PHONY: test_integration
 test_integration: ## Run integration tests
-	$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
+	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
+
+
+# brew install golangci-lint
+.PHONY: format
+format: ## Format source code based on golangci and prettier configuration
+	@command -v golangci-lint || (echo "Please install `golangci-lint`" && exit 1)
+	golangci-lint run --fix -v ./...
 
 # https://github.com/golang-migrate/migrate
 # brew install golang-migrate
@@ -103,6 +110,7 @@ db-migrate-version:  ## print the current migration version
 # go install github.com/volatiletech/sqlboiler/v4@latest
 .PHONY: db-orm-models
 db-orm-models: ## Generate Go database models
+	@command -v sqlboiler || (echo "Please install `sqlboiler`" && exit 1)
 	PSQL_USER=$(DB_USERNAME) PSQL_PASS='$(DB_PASSWORD)' PSQL_HOST=$(DB_HOSTNAME) \
 		sqlboiler --wipe --no-tests --add-soft-deletes -o internal/service/repository/postgres/orm --pkgname orm -c sqlboiler.toml psql
 

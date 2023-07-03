@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
@@ -37,15 +38,15 @@ func (s *sqlStore) ExecTx(ctx context.Context, fn func(Store) error) error {
 	}
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("BeginTx: %w", err)
 	}
 	newStore := NewSQLStore(tx)
 	err = fn(newStore)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return errors.New(err.Error() + "; " + rbErr.Error())
+			return fmt.Errorf("ExecTx: %w; Rollback: %v", err, rbErr)
 		}
-		return err
+		return fmt.Errorf("ExecTx: %w", err)
 	}
 	return tx.Commit()
 }

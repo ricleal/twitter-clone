@@ -26,12 +26,11 @@ type tweetService struct {
 	store store.Store
 }
 
-func NewTweetService(store store.Store) *tweetService {
-	return &tweetService{store}
+func NewTweetService(s store.Store) *tweetService {
+	return &tweetService{s}
 }
 
 func (s *tweetService) Create(ctx context.Context, t *entities.Tweet) error {
-
 	// open a transaction
 	if err := s.store.ExecTx(ctx, func(scopedStore store.Store) error {
 		tweetRepo := scopedStore.Tweets()
@@ -76,7 +75,7 @@ func (s *tweetService) FindAll(ctx context.Context) ([]entities.Tweet, error) {
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
 
-	var entTweets []entities.Tweet
+	entTweets := make([]entities.Tweet, 0, len(tweets))
 	for _, t := range tweets {
 		entTweets = append(entTweets, entities.Tweet{
 			ID:      t.ID,

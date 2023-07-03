@@ -9,12 +9,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/ricleal/twitter-clone/internal/api"
 	"github.com/ricleal/twitter-clone/internal/api/openapi"
 	"github.com/ricleal/twitter-clone/internal/service"
 	"github.com/ricleal/twitter-clone/internal/service/store"
 	"github.com/ricleal/twitter-clone/testhelpers"
-	"github.com/stretchr/testify/suite"
 )
 
 type APITestSuite struct {
@@ -29,11 +30,10 @@ func TestAPITestSuite(t *testing.T) {
 }
 
 func (ts *APITestSuite) SetupTest() {
-
 	// Set up our data store
-	store := store.NewMemStore()
-	st := service.NewTweetService(store)
-	su := service.NewUserService(store)
+	s := store.NewMemStore()
+	st := service.NewTweetService(s)
+	su := service.NewUserService(s)
 	// set up our API
 	twitterAPI := api.New(su, st)
 	r := chi.NewRouter()
@@ -52,7 +52,6 @@ func (ts *APITestSuite) TestGetUsersEmpty() {
 	statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 	ts.Require().NoError(err)
 	ts.Require().Equal(http.StatusNoContent, statusCode)
-
 }
 
 func (ts *APITestSuite) TestCreateAndGetUser() {
@@ -75,7 +74,7 @@ func (ts *APITestSuite) TestCreateAndGetUser() {
 		ts.Require().Equal("foo", response[0]["username"])
 		ts.Require().Equal("John Doe", response[0]["name"])
 		ts.Require().Equal("jd@mail.com", response[0]["email"])
-		userID = response[0]["id"].(string)
+		userID = response[0]["id"].(string) //nolint:errcheck // we know it's there
 	})
 	ts.Run("Get user", func() {
 		var response map[string]interface{}
@@ -111,7 +110,7 @@ func (ts *APITestSuite) TestCreateAndGetTweets() {
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusOK, statusCode)
-		userID = response[0]["id"].(string)
+		userID = response[0]["id"].(string) //nolint:errcheck // we know it's there
 	})
 	ts.Run("Create tweet", func() {
 		tweetStr := `{ "user_id": "` + userID + `", "content": "Hello World" }`

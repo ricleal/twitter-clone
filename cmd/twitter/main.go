@@ -7,27 +7,28 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog"
+	"github.com/rs/zerolog/log"
+
 	"github.com/ricleal/twitter-clone/internal/api"
 	"github.com/ricleal/twitter-clone/internal/api/openapi"
 	"github.com/ricleal/twitter-clone/internal/service"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 	"github.com/ricleal/twitter-clone/internal/service/store"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
-
 	ctx := context.Background()
 	ctx, err := InitLogFromEnv(ctx)
 	if err != nil {
 		panic(fmt.Sprintf("Error initializing logging: %v", err))
 	}
 
-	var port = flag.Int("port", 8889, "Port for the HTTP server")
+	port := flag.Int("port", 8889, "Port for the HTTP server")
 	flag.Parse()
 
 	swagger, err := openapi.GetSwagger()
@@ -46,9 +47,9 @@ func main() {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error connecting to database")
 	}
 	defer dbServer.Close()
-	store := store.NewSQLStore(dbServer.DB())
-	st := service.NewTweetService(store)
-	su := service.NewUserService(store)
+	s := store.NewSQLStore(dbServer.DB())
+	st := service.NewTweetService(s)
+	su := service.NewUserService(s)
 	twitterServer := api.New(su, st)
 
 	// This is how you set up a basic chi router
@@ -58,8 +59,7 @@ func main() {
 	// OpenAPI schema.
 	r.Use(middleware.OapiRequestValidator(swagger))
 
-	// Middleware logging
-	// Logger
+	// Middleware logging every HTTP request
 	logger := httplog.NewLogger("httplog-example", httplog.Options{
 		JSON: true,
 	})
@@ -68,14 +68,14 @@ func main() {
 	// register the http handlers
 	openapi.HandlerFromMux(twitterServer, r)
 
-	s := &http.Server{
+	server := &http.Server{
 		Handler:     r,
 		Addr:        fmt.Sprintf(":%d", *port),
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		ReadTimeout: 10 * time.Second,
 	}
 
-	// And we serve HTTP until the world ends.
+	// We serve HTTP until the world ends.
 	log.Ctx(ctx).Info().Int("port", *port).Msg("serving http on port")
-	log.Ctx(ctx).Fatal().Err(s.ListenAndServe()).Msg("http server quit")
-	// log.Fatal(s.ListenAndServe())
+	log.Ctx(ctx).Fatal().Err(server.ListenAndServe()).Msg("http server quit")
 }

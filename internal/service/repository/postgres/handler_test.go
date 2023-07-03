@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
-	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/test"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	testcontainers "github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
+	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/test"
 )
 
 type PostgresTestSuite struct {
@@ -35,7 +36,8 @@ func (ts *PostgresTestSuite) SetupTest() {
 }
 
 func (ts *PostgresTestSuite) TearDownTest() {
-	test.TeardownDB(ts.ctx, ts.container)
+	err := test.TeardownDB(ts.ctx, ts.container)
+	require.NoError(ts.T(), err)
 }
 
 func (ts *PostgresTestSuite) TestPostgres() {

@@ -2,13 +2,16 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/ricleal/twitter-clone/internal/service/repository"
-	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/ricleal/twitter-clone/internal/service/repository"
+	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
 )
 
 type UserServer struct {
@@ -40,10 +43,6 @@ func (s *UserServer) Create(ctx context.Context, u *repository.User) error {
 func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
 	ormUsers, err := orm.Users().All(ctx, s.dbConn)
 	if err != nil {
-		// Check if the error is a not found error
-		if err.Error() == "sql: no rows in result set" {
-			return nil, repository.ErrNotFound
-		}
 		return nil, fmt.Errorf("failed to find all users: %w", err)
 	}
 
@@ -64,7 +63,7 @@ func (s *UserServer) FindByID(ctx context.Context, id string) (*repository.User,
 	ormUser, err := orm.FindUser(ctx, s.dbConn, id)
 	if err != nil {
 		// Check if the error is a not found error
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to find user by id: %w", err)
@@ -82,7 +81,7 @@ func (s *UserServer) FindByUsername(ctx context.Context, username string) (*repo
 	ormUser, err := orm.Users(orm.UserWhere.Username.EQ(username)).One(ctx, s.dbConn)
 	if err != nil {
 		// Check if the error is a not found error
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to find user by username: %w", err)
@@ -100,7 +99,7 @@ func (s *UserServer) FindByEmail(ctx context.Context, email string) (*repository
 	ormUser, err := orm.Users(orm.UserWhere.Email.EQ(email)).One(ctx, s.dbConn)
 	if err != nil {
 		// Check if the error is a not found error
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to find user by email: %w", err)

@@ -7,37 +7,11 @@ import (
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
+
 	"github.com/ricleal/twitter-clone/internal/api/openapi"
 	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service"
 )
-
-// 200 – OK
-// Everything is working, The resource has been fetched and is transmitted in the message body.
-
-// 201 – CREATED
-// A new resource has been created
-
-// 204 – NO CONTENT
-// The resource was successfully deleted, no response body
-
-// 304 – NOT MODIFIED
-// This is used for caching purposes. It tells the client that the response has not been modified, so the client can continue to use the same cached version of the response.
-
-// 400 – BAD REQUEST
-// The request was invalid or cannot be served. The exact error should be explained in the error payload.
-
-// 401 – UNAUTHORIZED
-// The request requires user authentication.
-
-// 403 – FORBIDDEN
-// The server understood the request but is refusing it or the access is not allowed.
-
-// 404 – NOT FOUND
-// There is no resource behind the URI.
-
-// 500 – INTERNAL SERVER ERROR API
-// If an error occurs in the global catch blog, the stack trace should be logged and not returned as a response.
 
 type twitterServer struct {
 	tweetService service.TweetService
@@ -52,7 +26,7 @@ func New(userService service.UserService, tweetService service.TweetService) *tw
 }
 
 // List all tweets
-// (GET /tweets)
+// (GET /tweets).
 func (t *twitterServer) GetTweets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -74,12 +48,11 @@ func (t *twitterServer) GetTweets(w http.ResponseWriter, r *http.Request) {
 			UserId:  tweet.UserID,
 		})
 	}
-
-	json.NewEncoder(w).Encode(openapiTweets)
+	json.NewEncoder(w).Encode(openapiTweets) //nolint:errcheck //ignore error
 }
 
 // Create a tweet
-// (POST /tweets)
+// (POST /tweets).
 func (t *twitterServer) PostTweets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -108,7 +81,7 @@ func (t *twitterServer) PostTweets(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get tweet by ID
-// (GET /tweets/{id})
+// (GET /tweets/{id}).
 func (t *twitterServer) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
 	ctx := r.Context()
 
@@ -128,11 +101,11 @@ func (t *twitterServer) GetTweetsId(w http.ResponseWriter, r *http.Request, id u
 		UserId:  tweet.UserID,
 	}
 
-	json.NewEncoder(w).Encode(openapiTweet)
+	json.NewEncoder(w).Encode(openapiTweet) //nolint:errcheck //ignore error
 }
 
 // List all users
-// (GET /users)
+// (GET /users).
 func (t *twitterServer) GetUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -160,12 +133,11 @@ func (t *twitterServer) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(openapiUsers)
-
+	json.NewEncoder(w).Encode(openapiUsers) //nolint:errcheck //ignore error
 }
 
 // Create a user
-// (POST /users)
+// (POST /users).
 func (t *twitterServer) PostUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -193,7 +165,7 @@ func (t *twitterServer) PostUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get user profile by ID
-// (GET /users/{id})
+// (GET /users/{id}).
 func (t *twitterServer) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
 	ctx := r.Context()
 
@@ -216,5 +188,5 @@ func (t *twitterServer) GetUsersId(w http.ResponseWriter, r *http.Request, id uu
 		openapiUser.Name = &user.Name
 	}
 
-	json.NewEncoder(w).Encode(openapiUser)
+	json.NewEncoder(w).Encode(openapiUser) //nolint:errcheck //ignore error
 }

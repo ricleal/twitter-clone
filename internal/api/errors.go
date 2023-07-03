@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ricleal/twitter-clone/internal/api/openapi"
 	"github.com/rs/zerolog/log"
+
+	"github.com/ricleal/twitter-clone/internal/api/openapi"
 )
 
 // This function wraps sending of an error in the Error format, and
@@ -18,5 +19,5 @@ func sendAPIError(ctx context.Context, w http.ResponseWriter, code int, message 
 		Message: message,
 	}
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(apiErr)
+	json.NewEncoder(w).Encode(apiErr) //nolint:errcheck //ignore error
 }

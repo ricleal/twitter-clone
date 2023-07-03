@@ -2,12 +2,15 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type TweetServer struct {
@@ -21,7 +24,6 @@ func NewTweetServer(dbConn repository.DBTx) *TweetServer {
 }
 
 func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err error) {
-
 	tweet := orm.Tweet{
 		ID:      uuid.NewString(),
 		Content: t.Content,
@@ -39,14 +41,10 @@ func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err erro
 func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 	ormTweets, err := orm.Tweets().All(ctx, s.dbConn)
 	if err != nil {
-		// Check if the error is a not found error
-		if err.Error() == "sql: no rows in result set" {
-			return nil, repository.ErrNotFound
-		}
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
 
-	var tweets []repository.Tweet
+	tweets := make([]repository.Tweet, 0, len(ormTweets))
 	for _, t := range ormTweets {
 		tweets = append(tweets, repository.Tweet{
 			ID:      uuid.MustParse(t.ID),
@@ -62,7 +60,7 @@ func (s *TweetServer) FindByID(ctx context.Context, id string) (*repository.Twee
 	ormTweet, err := orm.FindTweet(ctx, s.dbConn, id)
 	if err != nil {
 		// Check if the error is a not found error
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to find tweet by id: %w", err)

@@ -28,13 +28,12 @@ type userService struct {
 	repo repository.UserRepository
 }
 
-func NewUserService(store store.Store) *userService {
-	repo := store.Users()
+func NewUserService(s store.Store) *userService {
+	repo := s.Users()
 	return &userService{repo}
 }
 
 func (s *userService) Create(ctx context.Context, u *entities.User) error {
-
 	if !validateEmail(u.Email) {
 		return entities.ErrInvalidEmail
 	}
@@ -56,7 +55,7 @@ func (s *userService) FindAll(ctx context.Context) ([]entities.User, error) {
 		return nil, fmt.Errorf("could not find users: %w", err)
 	}
 
-	var entUsers []entities.User
+	entUsers := make([]entities.User, 0, len(users))
 	for _, u := range users {
 		entUsers = append(entUsers, entities.User{
 			ID:       u.ID,
