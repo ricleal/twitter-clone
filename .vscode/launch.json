@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/twitter/main.go",
+            "program": "${workspaceFolder}/cmd/twitter",
             "env": {
                 "DB_URL": "postgres://postgres:Pass1234!@localhost:5432/twitter?sslmode=disable"
             }
