@@ -11,29 +11,29 @@ import (
 )
 
 // Store is a store for tweets and users.
-type sqlStore struct {
+type persistentStore struct {
 	db repository.DBTx
 }
 
-// NewSQLStore creates a new store with the given database connection.
-func NewSQLStore(db repository.DBTx) *sqlStore {
-	return &sqlStore{
+// NewPersistentStore creates a new store with the given database connection.
+func NewPersistentStore(db repository.DBTx) *persistentStore {
+	return &persistentStore{
 		db: db,
 	}
 }
 
 // Tweets returns a TweetRepository for managing tweets.
-func (s *sqlStore) Tweets() repository.TweetRepository {
+func (s *persistentStore) Tweets() repository.TweetRepository {
 	return postgres.NewTweetStorage(s.db)
 }
 
 // Users returns a UserRepository for managing users.
-func (s *sqlStore) Users() repository.UserRepository {
+func (s *persistentStore) Users() repository.UserRepository {
 	return postgres.NewUserStorage(s.db)
 }
 
 // ExecTx executes the given function within a database transaction.
-func (s *sqlStore) ExecTx(ctx context.Context, fn func(Store) error) error {
+func (s *persistentStore) ExecTx(ctx context.Context, fn func(Store) error) error {
 	db, ok := s.db.(*sql.DB)
 	if !ok {
 		return errors.New("ExecTx: db is not a *sql.DB")
@@ -42,7 +42,7 @@ func (s *sqlStore) ExecTx(ctx context.Context, fn func(Store) error) error {
 	if err != nil {
 		return fmt.Errorf("BeginTx: %w", err)
 	}
-	newStore := NewSQLStore(tx)
+	newStore := NewPersistentStore(tx)
 	err = fn(newStore)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {

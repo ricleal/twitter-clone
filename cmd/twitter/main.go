@@ -14,6 +14,7 @@ import (
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	apiv1 "github.com/ricleal/twitter-clone/internal/api/v1"
@@ -37,6 +38,8 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 
 	r := chi.NewRouter()
 	r.Use(oapiMiddleware.OapiRequestValidator(swagger))
+	r.Use(middleware.AllowContentType("application/json"))          //nolint:goconst // ignore
+	r.Use(middleware.SetHeader("Content-Type", "application/json")) // nolint:goconst // ignore
 
 	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterAPI, r)))
 
@@ -45,9 +48,6 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 		return fmt.Errorf("error marshaling swagger: %w", err)
 	}
 	root.Get("/api/v1/api.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
 		w.Header().Set("Content-Type", "application/json")
 		_, err := w.Write(apiJSON)
 		if err != nil {
@@ -55,8 +55,18 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 			return
 		}
 	})
-
 	return nil
+}
+
+func printRoutes(ctx context.Context, r chi.Router) {
+	walkFunc := func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		log.Ctx(ctx).Debug().Str("method", method).Str("route", route).Msg("registered route")
+		return nil
+	}
+
+	if err := chi.Walk(r, walkFunc); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error walking routes")
+	}
 }
 
 func main() {
@@ -75,18 +85,24 @@ func main() {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error connecting to database")
 	}
 	defer dbServer.Close()
-	s := store.NewSQLStore(dbServer.DB())
+	s := store.NewPersistentStore(dbServer.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
 
-	// Set up router
+	// Set up the root router
 	root := chi.NewRouter()
 	root.Use(middleware.Logger)
 	root.Use(middleware.Recoverer)
 	root.Use(middleware.StripSlashes)
 
+	// Set up API v1
 	if err := apiV1Router(root, su, st); err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error setting up openapi router")
+	}
+
+	// Print out the routes if we're in debug mode
+	if log.Ctx(ctx).GetLevel() <= zerolog.DebugLevel {
+		printRoutes(ctx, root)
 	}
 
 	// Start the server

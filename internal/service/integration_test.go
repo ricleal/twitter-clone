@@ -49,7 +49,7 @@ func (ts *TweetsTestSuite) TearDownTest() {
 }
 
 func (ts *TweetsTestSuite) TestValid() {
-	s := store.NewSQLStore(ts.s.DB())
+	s := store.NewPersistentStore(ts.s.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
 	ctx := context.Background()
@@ -96,7 +96,7 @@ func (ts *TweetsTestSuite) TestValid() {
 }
 
 func (ts *TweetsTestSuite) TestInvalid() {
-	s := store.NewSQLStore(ts.s.DB())
+	s := store.NewPersistentStore(ts.s.DB())
 	st := service.NewTweetService(s)
 	ctx := context.Background()
 

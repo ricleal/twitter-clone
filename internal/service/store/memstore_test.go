@@ -9,7 +9,7 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
-func TestMemStore_Tweets(t *testing.T) {
+func TestMemStoreTweets(t *testing.T) {
 	memStore := store.NewMemStore()
 
 	// Ensure the returned TweetRepository is the memory implementation
@@ -20,7 +20,7 @@ func TestMemStore_Tweets(t *testing.T) {
 	}
 }
 
-func TestMemStore_Users(t *testing.T) {
+func TestMemStoreUsers(t *testing.T) {
 	memStore := store.NewMemStore()
 
 	// Ensure the returned UserRepository is the memory implementation
@@ -31,7 +31,7 @@ func TestMemStore_Users(t *testing.T) {
 	}
 }
 
-func TestMemStore_ExecTx_Success(t *testing.T) {
+func TestMemStoreExecTx_Success(t *testing.T) {
 	memStore := store.NewMemStore()
 
 	// Test a successful transaction execution
@@ -44,7 +44,7 @@ func TestMemStore_ExecTx_Success(t *testing.T) {
 	}
 }
 
-func TestMemStore_ExecTx_Error(t *testing.T) {
+func TestMemStoreExecTx_Error(t *testing.T) {
 	memStore := store.NewMemStore()
 	memStore.TransactionError = true
 

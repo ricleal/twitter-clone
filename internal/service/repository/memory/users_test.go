@@ -11,7 +11,7 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
 
-func TestUserHandler_Create(t *testing.T) {
+func TestUserHandlerCreate(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Test creating a new user
@@ -45,7 +45,7 @@ func TestUserHandler_Create(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindAll(t *testing.T) {
+func TestUserHandlerFindAll(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Create some users
@@ -90,7 +90,7 @@ func TestUserHandler_FindAll(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindByID(t *testing.T) {
+func TestUserHandlerFindByID(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Create a user
@@ -116,7 +116,7 @@ func TestUserHandler_FindByID(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindByID_NotFound(t *testing.T) {
+func TestUserHandlerFindByIDNotFound(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Retrieve a non-existent user by ID
@@ -126,7 +126,7 @@ func TestUserHandler_FindByID_NotFound(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindByUsername(t *testing.T) {
+func TestUserHandlerFindByUsername(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Create a user
@@ -152,7 +152,7 @@ func TestUserHandler_FindByUsername(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindByUsername_NotFound(t *testing.T) {
+func TestUserHandlerFindByUsernameNotFound(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Retrieve a non-existent user by username
@@ -162,7 +162,7 @@ func TestUserHandler_FindByUsername_NotFound(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindByEmail(t *testing.T) {
+func TestUserHandlerFindByEmail(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Create a user
@@ -188,7 +188,7 @@ func TestUserHandler_FindByEmail(t *testing.T) {
 	}
 }
 
-func TestUserHandler_FindByEmail_NotFound(t *testing.T) {
+func TestUserHandlerFindByEmailNotFound(t *testing.T) {
 	userHandler := memory.NewUserHandler()
 
 	// Retrieve a non-existent user by email

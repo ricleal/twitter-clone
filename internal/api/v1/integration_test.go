@@ -46,7 +46,7 @@ func (ts *APITestIntegrationSuite) SetupTest() {
 	ts.s, err = postgres.NewStorage(ctx)
 	require.NoError(ts.T(), err)
 
-	s := store.NewSQLStore(ts.s.DB())
+	s := store.NewPersistentStore(ts.s.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
 

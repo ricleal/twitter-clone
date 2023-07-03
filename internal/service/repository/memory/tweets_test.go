@@ -11,7 +11,7 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
 
-func TestTweetHandler_Create(t *testing.T) {
+func TestTweetHandlerCreate(t *testing.T) {
 	tweetHandler := memory.NewTweetHandler()
 
 	// Test creating a new tweet
@@ -44,7 +44,7 @@ func TestTweetHandler_Create(t *testing.T) {
 	}
 }
 
-func TestTweetHandler_FindAll(t *testing.T) {
+func TestTweetHandlerFindAll(t *testing.T) {
 	tweetHandler := memory.NewTweetHandler()
 
 	// Create some tweets
@@ -87,7 +87,7 @@ func TestTweetHandler_FindAll(t *testing.T) {
 	}
 }
 
-func TestTweetHandler_FindByID(t *testing.T) {
+func TestTweetHandlerFindByID(t *testing.T) {
 	tweetHandler := memory.NewTweetHandler()
 
 	// Create a tweet
@@ -112,7 +112,7 @@ func TestTweetHandler_FindByID(t *testing.T) {
 	}
 }
 
-func TestTweetHandler_FindByID_NotFound(t *testing.T) {
+func TestTweetHandlerFindByIDNotFound(t *testing.T) {
 	tweetHandler := memory.NewTweetHandler()
 
 	// Retrieve a non-existent tweet by ID

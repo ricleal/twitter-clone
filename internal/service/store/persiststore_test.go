@@ -48,7 +48,7 @@ func (ts *StoreTestSuite) TearDownTest() {
 
 func (ts *StoreTestSuite) TestTransaction() {
 	ctx := context.Background()
-	s := store.NewSQLStore(ts.s.DB())
+	s := store.NewPersistentStore(ts.s.DB())
 
 	if err := s.ExecTx(ctx, func(s store.Store) error {
 		tweetsRepo := s.Tweets()

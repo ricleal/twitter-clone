@@ -10,10 +10,7 @@
 > 4. Create a tweet.
 > 5. List all tweets.
 > 6. Get tweet by ID.
-> 
-> No need to implement any auth logic or UI parts. The main focus should be on the code structure and its extensibility like adding new entities to the system (e.g., followers, replies, bookmarks, etc).
-> The service should have a persistent storage layer (e.g., a Postgres DB). It's ok to use web frameworks and/or ORM libraries, but please don't overdo.
-> No problem with using chatgpt/copilot for this exercise.
+
 
 ## Architecture
 
@@ -26,6 +23,8 @@ I have used an architecture following the same principles as the [Clean Architec
 There are 2 repositories:
 - `internal/service/repository/postgres`: the repository that implements the interfaces defined in `internal/service/repository/interfaces.go`
 - `internal/service/repository/memory`: a memory mock repository that implements the interfaces defined in `internal/service/repositoryinterfaces.go`. This is used for unit testing.
+
+To interact with this repositories, there is a [Store](internal/service/store). This store can chain multiple repository operations in a single transaction. There is a in-memory store and a persistent (postgres) store. The in-memory store is used for unit testing. The service layer uses the store to interact with the repositories. It never interacts directly with the repositories.
 
 The business logic is implemented in the `internal/service` package. This represents the use cases of the application - the domain service. Note that the business logic always use data entities defined in the `internal/entities` package. This ensures business logic is decoupled from the data layer defined in the `internal/service/repository` package.
 
