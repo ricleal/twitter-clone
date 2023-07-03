@@ -8,7 +8,6 @@ require (
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getkin/kin-openapi v0.117.0
 	github.com/go-chi/chi/v5 v5.0.8
-	github.com/go-chi/httplog v0.3.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.9

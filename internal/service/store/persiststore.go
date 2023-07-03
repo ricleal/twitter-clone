@@ -24,12 +24,12 @@ func NewSQLStore(db repository.DBTx) *sqlStore {
 
 // Tweets returns a TweetRepository for managing tweets.
 func (s *sqlStore) Tweets() repository.TweetRepository {
-	return postgres.NewTweetServer(s.db)
+	return postgres.NewTweetStorage(s.db)
 }
 
 // Users returns a UserRepository for managing users.
 func (s *sqlStore) Users() repository.UserRepository {
-	return postgres.NewUserServer(s.db)
+	return postgres.NewUserStorage(s.db)
 }
 
 // ExecTx executes the given function within a database transaction.

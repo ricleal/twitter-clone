@@ -21,7 +21,7 @@ import (
 type TweetsTestSuite struct {
 	suite.Suite
 	container *testcontainers.PostgresContainer
-	s         *postgres.Handler
+	s         *postgres.Storage
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -35,7 +35,7 @@ func (ts *TweetsTestSuite) SetupTest() {
 	ctx := context.Background()
 	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
-	ts.s, err = postgres.NewHandler(ctx)
+	ts.s, err = postgres.NewStorage(ctx)
 	require.NoError(ts.T(), err)
 }
 
@@ -48,8 +48,8 @@ func (ts *TweetsTestSuite) TearDownTest() {
 
 func (ts *TweetsTestSuite) TestData() {
 	ctx := context.Background()
-	t := postgres.NewTweetServer(ts.s.DB())
-	u := postgres.NewUserServer(ts.s.DB())
+	t := postgres.NewTweetStorage(ts.s.DB())
+	u := postgres.NewUserStorage(ts.s.DB())
 
 	// Find all tweets empty DB
 	{

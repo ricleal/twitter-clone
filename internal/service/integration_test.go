@@ -20,35 +20,35 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
-type TeetsTestSuite struct {
+type TweetsTestSuite struct {
 	suite.Suite
 	container *testcontainers.PostgresContainer
-	s         *postgres.Handler
+	s         *postgres.Storage
 }
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run.
-func TestTeetsTestSuite(t *testing.T) {
-	suite.Run(t, new(TeetsTestSuite))
+func TestTweetsTestSuite(t *testing.T) {
+	suite.Run(t, new(TweetsTestSuite))
 }
 
-func (ts *TeetsTestSuite) SetupTest() {
+func (ts *TweetsTestSuite) SetupTest() {
 	var err error
 	ctx := context.Background()
 	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
-	ts.s, err = postgres.NewHandler(ctx)
+	ts.s, err = postgres.NewStorage(ctx)
 	require.NoError(ts.T(), err)
 }
 
-func (ts *TeetsTestSuite) TearDownTest() {
+func (ts *TweetsTestSuite) TearDownTest() {
 	ctx := context.Background()
 	err := test.TeardownDB(ctx, ts.container)
 	require.NoError(ts.T(), err)
 	ts.s.Close()
 }
 
-func (ts *TeetsTestSuite) TestValid() {
+func (ts *TweetsTestSuite) TestValid() {
 	s := store.NewSQLStore(ts.s.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
@@ -95,7 +95,7 @@ func (ts *TeetsTestSuite) TestValid() {
 	ts.Require().ErrorIs(err, entities.ErrInvalidUserID)
 }
 
-func (ts *TeetsTestSuite) TestInvalid() {
+func (ts *TweetsTestSuite) TestInvalid() {
 	s := store.NewSQLStore(ts.s.DB())
 	st := service.NewTweetService(s)
 	ctx := context.Background()

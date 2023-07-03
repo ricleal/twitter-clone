@@ -1,4 +1,6 @@
 # Template for .env file
+# Copy this file to .env and fill in the values: cp env-template .env
+# The values in this file are the makefile defaults.
 # Export it as: export $(egrep -v '^#' .env | xargs)
 DB_HOSTNAME=localhost
 DB_PORT=5432

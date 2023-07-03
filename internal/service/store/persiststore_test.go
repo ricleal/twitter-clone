@@ -21,7 +21,7 @@ import (
 type StoreTestSuite struct {
 	suite.Suite
 	container *testcontainers.PostgresContainer
-	s         *postgres.Handler
+	s         *postgres.Storage
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -35,7 +35,7 @@ func (ts *StoreTestSuite) SetupTest() {
 	ctx := context.Background()
 	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
-	ts.s, err = postgres.NewHandler(ctx)
+	ts.s, err = postgres.NewStorage(ctx)
 	require.NoError(ts.T(), err)
 }
 
@@ -46,7 +46,7 @@ func (ts *StoreTestSuite) TearDownTest() {
 	ts.s.Close()
 }
 
-func (ts *StoreTestSuite) TestData() {
+func (ts *StoreTestSuite) TestTransaction() {
 	ctx := context.Background()
 	s := store.NewSQLStore(ts.s.DB())
 

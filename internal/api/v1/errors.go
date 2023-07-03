@@ -1,4 +1,4 @@
-package api
+package v1
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	openapi "github.com/ricleal/twitter-clone/internal/api/openapiv1"
+	"github.com/ricleal/twitter-clone/internal/api/v1/openapi"
 )
 
 // This function wraps sending of an error in the Error format, and

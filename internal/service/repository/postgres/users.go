@@ -14,20 +14,20 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
 )
 
-// UserServer is a postgres implementation of the repository.UserServer interface.
-type UserServer struct {
+// UserStorage is a postgres implementation of the repository.UserStorage interface.
+type UserStorage struct {
 	dbConn repository.DBTx
 }
 
-// NewUserServer returns a new UserServer.
-func NewUserServer(dbConn repository.DBTx) *UserServer {
-	return &UserServer{
+// NewUserStorage returns a new UserServer.
+func NewUserStorage(dbConn repository.DBTx) *UserStorage {
+	return &UserStorage{
 		dbConn: dbConn,
 	}
 }
 
 // Create creates a new user.
-func (s *UserServer) Create(ctx context.Context, u *repository.User) error {
+func (s *UserStorage) Create(ctx context.Context, u *repository.User) error {
 	user := orm.User{
 		ID:       uuid.NewString(),
 		Username: u.Username,
@@ -44,7 +44,7 @@ func (s *UserServer) Create(ctx context.Context, u *repository.User) error {
 }
 
 // FindAll returns all users.
-func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
+func (s *UserStorage) FindAll(ctx context.Context) ([]repository.User, error) {
 	ormUsers, err := orm.Users().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all users: %w", err)
@@ -64,7 +64,7 @@ func (s *UserServer) FindAll(ctx context.Context) ([]repository.User, error) {
 }
 
 // FindByID returns a user by ID.
-func (s *UserServer) FindByID(ctx context.Context, id string) (*repository.User, error) {
+func (s *UserStorage) FindByID(ctx context.Context, id string) (*repository.User, error) {
 	ormUser, err := orm.FindUser(ctx, s.dbConn, id)
 	if err != nil {
 		// Check if the error is a not found error
@@ -83,7 +83,7 @@ func (s *UserServer) FindByID(ctx context.Context, id string) (*repository.User,
 }
 
 // FindByUsername returns a user by username.
-func (s *UserServer) FindByUsername(ctx context.Context, username string) (*repository.User, error) {
+func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*repository.User, error) {
 	ormUser, err := orm.Users(orm.UserWhere.Username.EQ(username)).One(ctx, s.dbConn)
 	if err != nil {
 		// Check if the error is a not found error
@@ -102,7 +102,7 @@ func (s *UserServer) FindByUsername(ctx context.Context, username string) (*repo
 }
 
 // FindByEmail returns a user by email.
-func (s *UserServer) FindByEmail(ctx context.Context, email string) (*repository.User, error) {
+func (s *UserStorage) FindByEmail(ctx context.Context, email string) (*repository.User, error) {
 	ormUser, err := orm.Users(orm.UserWhere.Email.EQ(email)).One(ctx, s.dbConn)
 	if err != nil {
 		// Check if the error is a not found error

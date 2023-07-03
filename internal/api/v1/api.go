@@ -1,4 +1,4 @@
-package api
+package v1
 
 import (
 	"encoding/json"
@@ -8,19 +8,20 @@ import (
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 
-	openapi "github.com/ricleal/twitter-clone/internal/api/openapiv1"
+	"github.com/ricleal/twitter-clone/internal/api/v1/openapi"
 	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service"
 )
 
-type TwitterAPI struct {
+// twitterAPI is the implementation of the Twitter API.
+type twitterAPI struct {
 	tweetService service.TweetService
 	userService  service.UserService
 }
 
 // New returns a new twitterServer with the given services.
-func New(userService service.UserService, tweetService service.TweetService) *TwitterAPI {
-	return &TwitterAPI{
+func New(userService service.UserService, tweetService service.TweetService) *twitterAPI {
+	return &twitterAPI{
 		tweetService: tweetService,
 		userService:  userService,
 	}
@@ -28,7 +29,7 @@ func New(userService service.UserService, tweetService service.TweetService) *Tw
 
 // List all tweets
 // (GET /tweets).
-func (t *TwitterAPI) GetTweets(w http.ResponseWriter, r *http.Request) {
+func (t *twitterAPI) GetTweets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	tweets, err := t.tweetService.FindAll(ctx)
@@ -55,7 +56,7 @@ func (t *TwitterAPI) GetTweets(w http.ResponseWriter, r *http.Request) {
 
 // Create a tweet
 // (POST /tweets).
-func (t *TwitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
+func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var newTweet openapi.Tweet
@@ -84,7 +85,7 @@ func (t *TwitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 // Get tweet by ID
 // (GET /tweets/{id}).
-func (t *TwitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
+func (t *twitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
 	ctx := r.Context()
 
 	tweet, err := t.tweetService.FindByID(ctx, id.String())
@@ -108,7 +109,7 @@ func (t *TwitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid
 
 // List all users
 // (GET /users).
-func (t *TwitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
+func (t *twitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	users, err := t.userService.FindAll(ctx)
@@ -142,7 +143,7 @@ func (t *TwitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 // Create a user
 // (POST /users).
-func (t *TwitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
+func (t *twitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var newUser openapi.User
@@ -170,7 +171,7 @@ func (t *TwitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
 
 // Get user profile by ID
 // (GET /users/{id}).
-func (t *TwitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
+func (t *twitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:rerrcheck,revive,stylecheck //methods are generated
 	ctx := r.Context()
 
 	user, err := t.userService.FindByID(ctx, id.String())

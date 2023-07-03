@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -17,19 +16,19 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ricleal/twitter-clone/internal/api"
-	"github.com/ricleal/twitter-clone/internal/api/openapiv1"
+	apiv1 "github.com/ricleal/twitter-clone/internal/api/v1"
+	openapiv1 "github.com/ricleal/twitter-clone/internal/api/v1/openapi"
 	"github.com/ricleal/twitter-clone/internal/service"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
-func openAPIRouter(root *chi.Mux, twitterServer *api.TwitterAPI) *chi.Mux {
+func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService) error {
+	twitterAPI := apiv1.New(su, st)
 
 	swagger, err := openapiv1.GetSwagger()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
-		os.Exit(1)
+		return fmt.Errorf("error getting swagger: %w", err)
 	}
 
 	// Clear out the servers array in the swagger spec, that skips validating
@@ -39,19 +38,25 @@ func openAPIRouter(root *chi.Mux, twitterServer *api.TwitterAPI) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(oapiMiddleware.OapiRequestValidator(swagger))
 
-	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterServer, r)))
+	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterAPI, r)))
 
-	apiJSON, _ := json.Marshal(swagger)
+	apiJSON, err := json.Marshal(swagger)
+	if err != nil {
+		return fmt.Errorf("error marshaling swagger: %w", err)
+	}
 	root.Get("/api/v1/api.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(apiJSON)
+		_, err := w.Write(apiJSON)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	})
 
-	return r
-
+	return nil
 }
 
 func main() {
@@ -61,11 +66,11 @@ func main() {
 		panic(fmt.Sprintf("Error initializing logging: %v", err))
 	}
 
-	port := flag.Int("port", 8889, "Port for the HTTP server")
+	port := flag.Int("port", 8888, "Port for the HTTP server")
 	flag.Parse()
 
 	// Set up our data store
-	dbServer, err := postgres.NewHandler(ctx)
+	dbServer, err := postgres.NewStorage(ctx)
 	if err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error connecting to database")
 	}
@@ -73,7 +78,6 @@ func main() {
 	s := store.NewSQLStore(dbServer.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
-	twitterAPI := api.New(su, st)
 
 	// Set up router
 	root := chi.NewRouter()
@@ -81,24 +85,14 @@ func main() {
 	root.Use(middleware.Recoverer)
 	root.Use(middleware.StripSlashes)
 
-	openAPIRouter(root, twitterAPI)
-
-	// TODO: Delete this
-	// DEBUG: Print out all routes
-	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		fmt.Printf("%s %s\n", method, route)
-		return nil
-	}
-
-	if err := chi.Walk(root, walkFunc); err != nil {
-		fmt.Printf("Logging err: %s\n", err.Error())
+	if err := apiV1Router(root, su, st); err != nil {
+		log.Ctx(ctx).Fatal().Err(err).Msg("error setting up openapi router")
 	}
 
 	// Start the server
 	if err := serve(ctx, root, *port); err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error serving http")
 	}
-
 }
 
 func serve(ctx context.Context, handler http.Handler, port int) error {

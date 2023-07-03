@@ -13,20 +13,20 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
 )
 
-// TweetServer is a postgres implementation of the repository.TweetServer interface.
-type TweetServer struct {
+// TweetStorage is a postgres implementation of the repository.TweetStorage interface.
+type TweetStorage struct {
 	dbConn repository.DBTx
 }
 
-// NewTweetServer returns a new TweetServer.
-func NewTweetServer(dbConn repository.DBTx) *TweetServer {
-	return &TweetServer{
+// NewTweetStorage returns a new TweetServer.
+func NewTweetStorage(dbConn repository.DBTx) *TweetStorage {
+	return &TweetStorage{
 		dbConn: dbConn,
 	}
 }
 
 // Create creates a new tweet.
-func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err error) {
+func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) (err error) {
 	tweet := orm.Tweet{
 		ID:      uuid.NewString(),
 		Content: t.Content,
@@ -42,7 +42,7 @@ func (s *TweetServer) Create(ctx context.Context, t *repository.Tweet) (err erro
 }
 
 // FindAll returns all tweets.
-func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
+func (s *TweetStorage) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 	ormTweets, err := orm.Tweets().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
@@ -61,7 +61,7 @@ func (s *TweetServer) FindAll(ctx context.Context) ([]repository.Tweet, error) {
 }
 
 // FindByID returns a tweet by ID.
-func (s *TweetServer) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
+func (s *TweetStorage) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
 	ormTweet, err := orm.FindTweet(ctx, s.dbConn, id)
 	if err != nil {
 		// Check if the error is a not found error
