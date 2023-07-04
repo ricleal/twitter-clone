@@ -60,15 +60,15 @@ GET /api/v1/users/{id}
 
 ### Running the application
 
-Ideally, the application should be launched from the makefile. This makes sure `docker-compose` is run with the correct environment variables. Otherwise, set the environment variables in the `env-template` file. See `env-template` for the instructions.
+Ideally, the application should be launched from the makefile. This makes sure `docker-compose` is run with the correct environment variables. Otherwise, set the environment variables defined in the `env-template` file. See `env-template` for the instructions.
 
 To start the application, run:
 ```bash
 make docker-up
 ```
-It runs in attached so you can see the logs.
+It runs in attached mode, so you can see the logs of the application. 
 
-Below are a few examples of how to use the API. Note that the API spec is available at `http://localhost:8888/api/v1/api.json`.
+Below are a few examples of how to use the API. Note that the API spec is available at the endpoint `/api/v1/api.json`.
 
 ```bash
 ## Create a user
@@ -148,9 +148,9 @@ If you don't have a postgres database running locally, you can start one with:
 make db-start
 ```
 
-If you have one, edit the `.env` file to point to your database.
+If you have one, edit the `.env` file (copied from the `env-template`) to point to your database.
 
-Run the migrations with:
+To update the database schema, run the migrations with:
 
 ```bash
 make db-migrate-up
