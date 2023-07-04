@@ -16,7 +16,7 @@
 
 ### Backend
 
-I have used an architecture following the same principles as the [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) by Robert C. Martin. I have included the repository pattern to abstract the data layer from the business logic. The most important packages are:
+I have used an architecture following the same principles as the [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) by Robert C. Martin. I have included the [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html) to abstract the data layer from the business logic. The packages worth mentioning are:
 
 - `internal/service/repository/postgres/orm`: the ORM auto generated code from the database schema that [SQLBoiler](https://github.com/volatiletech/sqlboiler) generates.
 
@@ -24,15 +24,15 @@ There are 2 repositories:
 - `internal/service/repository/postgres`: the repository that implements the interfaces defined in `internal/service/repository/interfaces.go`
 - `internal/service/repository/memory`: a memory mock repository that implements the interfaces defined in `internal/service/repositoryinterfaces.go`. This is used for unit testing.
 
-To interact with this repositories, there is a [Store](internal/service/store). This store can chain multiple repository operations in a single transaction. There is a in-memory store and a persistent (postgres) store. The in-memory store is used for unit testing. The service layer uses the store to interact with the repositories. It never interacts directly with the repositories.
+To interact with this repositories, there is a [Store](internal/service/store). This store can chain multiple repository operations in a single transaction. It sort of follows the same principles as in the [Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html) pattern. There is a in-memory store and a persistent (postgres) store. The in-memory store is used for unit testing. The service layer uses the store to interact with the repositories. It never interacts directly with the repositories.
 
 The business logic is implemented in the `internal/service` package. This represents the use cases of the application - the domain service. Note that the business logic always use data entities defined in the `internal/entities` package. This ensures business logic is decoupled from the data layer defined in the `internal/service/repository` package.
 
 ### Frontend API
 
-The use cases are exposed via the API layer. The API layer is implemented using the [go-chi](https://github.com/go-chi/chi). 
+The use cases are exposed via the API layer. The API layer is implemented using the [go-chi](https://github.com/go-chi/chi) router. 
 
-The endpoints routes were generated from a [Open-API](https://www.openapis.org/) [spec](openapi.yaml) using [oapi-codegen](https://github.com/deepmap/oapi-codegen). The code generated is in `internal/api/v1/openapi`.
+The endpoints routes were generated from a [Open-API](https://www.openapis.org/) [spec file](openapi.yaml) using [oapi-codegen](https://github.com/deepmap/oapi-codegen). The code generated is in `internal/api/v1/openapi`.
 
 The following endpoints are exposed:
 ```bash
@@ -62,9 +62,11 @@ GET /api/v1/users/{id}
 
 Ideally, the application should be launched from the makefile. This makes sure `docker-compose` is run with the correct environment variables. Otherwise, set the environment variables in the `env-template` file. See `env-template` for the instructions.
 
+To start the application, run:
 ```bash
 make docker-up
 ```
+It runs in attached so you can see the logs.
 
 Below are a few examples of how to use the API. Note that the API spec is available at `http://localhost:8888/api/v1/api.json`.
 
@@ -98,6 +100,12 @@ tweet_id=$(curl http://localhost:8888/api/v1/tweets | jq -r '.[0].id')
 curl -v http://localhost:8888/api/v1/tweets/$tweet_id
 ```
 
+When you are done, stop the application in another terminal with:
+
+```bash
+make docker-down
+```
+
 ## Development
 
 ### Makefile targets
@@ -123,10 +131,62 @@ lint                           Lint and format source code based on golangci con
 # Runs tests
 test                           Run unit tests
 test_integration               Run integration tests
+test_e2e                       Run end-to-end tests
 # Starts the API in docker (starts the database and runs the migrations if needed)
 api-start                      Run docker API container
 api-stop                       Stop docker API container
 # Runs docker-compose up/down with the correct environment variables
 docker-down                    Stop docker container
 docker-up                      Run docker container
+```
+
+### Contributing to the project
+
+If you don't have a postgres database running locally, you can start one with:
+
+```bash
+make db-start
+```
+
+If you have one, edit the `.env` file to point to your database.
+
+Run the migrations with:
+
+```bash
+make db-migrate-up
+```
+
+Edit the code at your convenience. 
+
+Launch the API with:
+
+```bash
+make dev
+```
+
+You can stop it with `Ctrl-C`.
+
+Run the tests with:
+
+```bash
+make test
+make test_integration
+```
+
+Run the linter with:
+
+```bash
+make lint
+```
+
+Run the end-to-end tests with:
+
+```bash
+make test_e2e
+```
+
+When you are done, stop the database with:
+
+```bash
+make db-stop
 ```

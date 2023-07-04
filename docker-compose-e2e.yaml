@@ -46,8 +46,28 @@ services:
       DB_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable"
       LOG_LEVEL: ${LOG_LEVEL}
       API_PORT: ${API_PORT}
-    ports:
-      - ${API_PORT}:${API_PORT}
+    networks:
+      - pgdata
+    
+
+  curl:
+    image: badouralix/curl-jq:ubuntu
+    environment:
+      API_PORT: ${API_PORT}
+    volumes:
+      - ./e2e:/e2e
+    depends_on:
+      - api
+    command: /bin/sh -c "while ! curl -sSf -o /dev/null http://api:${API_PORT}/api/v1/api.json; do sleep 1; done && /e2e/test.sh"
+    networks:
+      - pgdata
+  
+  wait:
+    image: busybox:1.36.1
+    depends_on:
+      curl:
+        condition: service_completed_successfully
+    command: /bin/sh -c "echo 'All tests run!'"
     networks:
       - pgdata
 

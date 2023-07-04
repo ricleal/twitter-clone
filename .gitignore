@@ -29,3 +29,6 @@ go.work
 ## IDE files
 .idea
 .vscode
+
+## E2E tests
+e2e/results.txt

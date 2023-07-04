@@ -20,6 +20,7 @@ ENV_VARS = \
 	DB_PASSWORD=$(DB_PASSWORD) \
 	LOG_LEVEL=$(LOG_LEVEL) \
 	API_PORT=$(API_PORT) \
+	DB_URL=$(DB_URL) \
 	$(NULL)
 
 
@@ -37,6 +38,12 @@ test: ## Run unit tests
 test_integration: ## Run integration tests
 	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
 
+.PHONY: test_e2e
+test_e2e: ## Run end-to-end tests
+	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach
+	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl
+	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes
+
 # Instalation: brew install golangci-lint
 .PHONY: lint
 lint: ## Lint and format source code based on golangci configuration
@@ -48,11 +55,11 @@ lint: ## Lint and format source code based on golangci configuration
 
 .PHONY: db-start
 db-start: ## Postgres start
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --detach postgres
+	@$(ENV_VARS) docker-compose -f docker-compose-db.yaml -p db up --detach postgres-dev
 
 .PHONY: db-stop
 db-stop: ## Postgres stop
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml stop postgres
+	@$(ENV_VARS) docker-compose -f docker-compose-db.yaml -p db stop postgres-dev
 
 .PHONY: db-cli
 db-cli: ## Start the Postgres CLI
@@ -64,15 +71,15 @@ db-cli: ## Start the Postgres CLI
 ## API targets
 
 api-build:
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml build api
+	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api build api-dev
 
 .PHONY: api-start
 api-start: api-build ## Run docker API container
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --detach api
+	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api up --detach api-dev
 
 .PHONY: api-stop
 api-stop: ## Stop docker API container
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml stop api
+	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api stop api-dev
 
 
 ### DB migration targets
@@ -124,7 +131,7 @@ db-orm-models: ## Generate Go database models
 
 .PHONY: help
 help:
-	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-][0-9a-zA-Z_-]*:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 #### Docker targets ####
 

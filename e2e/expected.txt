@@ -1,0 +1,26 @@
+[
+  {
+    "email": "jd@mail.com",
+    "id": "3e2186fa-e80f-4726-a010-eb8a102c7800",
+    "name": "John Doe",
+    "username": "foo"
+  }
+]
+{
+  "email": "jd@mail.com",
+  "id": "3e2186fa-e80f-4726-a010-eb8a102c7800",
+  "name": "John Doe",
+  "username": "foo"
+}
+[
+  {
+    "content": "Hello World!",
+    "id": "4828897e-482b-4298-81cf-37a1c7c4d792",
+    "user_id": "3e2186fa-e80f-4726-a010-eb8a102c7800"
+  }
+]
+{
+  "content": "Hello World!",
+  "id": "4828897e-482b-4298-81cf-37a1c7c4d792",
+  "user_id": "3e2186fa-e80f-4726-a010-eb8a102c7800"
+}
