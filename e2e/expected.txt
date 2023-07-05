@@ -1,3 +1,5 @@
+[]
+null
 [
   {
     "email": "jd@mail.com",

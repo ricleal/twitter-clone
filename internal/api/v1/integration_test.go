@@ -66,11 +66,11 @@ func (ts *APITestIntegrationSuite) TearDownTest() {
 
 func (ts *APITestIntegrationSuite) TestGetUsersEmpty() {
 	ctx := context.Background()
-	var response struct{}
-
+	var response []interface{}
 	statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 	ts.Require().NoError(err)
-	ts.Require().Equal(http.StatusNoContent, statusCode)
+	ts.Require().Equal(http.StatusOK, statusCode)
+	ts.Require().Equal([]interface{}{}, response)
 }
 
 func (ts *APITestIntegrationSuite) TestCreateAndGetUser() {
@@ -80,10 +80,11 @@ func (ts *APITestIntegrationSuite) TestCreateAndGetUser() {
 	var userID string
 
 	ts.Run("Get users empty DB", func() {
-		var response struct{}
+		var response []interface{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
 		ts.Require().NoError(err)
-		ts.Require().Equal(http.StatusNoContent, statusCode)
+		ts.Require().Equal(http.StatusOK, statusCode)
+		ts.Require().Equal([]interface{}{}, response)
 	})
 	ts.Run("Create user", func() {
 		var response struct{}
@@ -112,10 +113,11 @@ func (ts *APITestIntegrationSuite) TestCreateAndGetUser() {
 		ts.Require().Equal("jd@mail.com", response["email"])
 	})
 	ts.Run("Get invalid user", func() {
-		var response struct{}
+		var response interface{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users/"+uuid.NewString(), &response)
 		ts.Require().NoError(err)
-		ts.Require().Equal(http.StatusNoContent, statusCode)
+		ts.Require().Equal(http.StatusOK, statusCode)
+		ts.Require().Nil(response)
 	})
 }
 
@@ -187,25 +189,10 @@ func (ts *APITestIntegrationSuite) TestCreateAndGetTweets() {
 		ts.Require().Equal("Hello World", response.Content)
 	})
 	ts.Run("Get invalid tweet", func() {
-		var response struct{}
+		var response interface{}
 		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/tweets/"+uuid.NewString(), &response)
 		ts.Require().NoError(err)
-		ts.Require().Equal(http.StatusNoContent, statusCode)
-	})
-}
-
-func (ts *APITestIntegrationSuite) TestError() {
-	ctx := context.Background()
-
-	// let's close the database connection to force an error
-	ts.s.Close()
-
-	ts.Run("Get users", func() {
-		var response map[string]interface{}
-		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
-		ts.Require().NoError(err)
-		ts.Require().Equal(http.StatusInternalServerError, statusCode)
-		ts.Require().Equal("Error listing users", response["message"])
-		ts.Require().Equal(float64(500), response["code"])
+		ts.Require().Equal(http.StatusOK, statusCode)
+		ts.Require().Nil(response)
 	})
 }

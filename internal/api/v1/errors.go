@@ -10,7 +10,7 @@ import (
 	"github.com/ricleal/twitter-clone/internal/api/v1/openapi"
 )
 
-// This function wraps sending of an error in the Error format
+// This function wraps sending of an error in the Error format.
 func sendAPIError(ctx context.Context, w http.ResponseWriter, code int, message string, err error) {
 	log.Ctx(ctx).Error().Err(err).Msg(message)
 	apiErr := openapi.Error{

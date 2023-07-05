@@ -4,6 +4,12 @@ set -e
 
 CURL="curl -s"
 
+## Get all users from an empty DB
+${CURL} http://api:${API_PORT}/api/v1/users
+
+## Get a user by id from an empty DB
+${CURL} http://api:${API_PORT}/api/v1/users/00000000-0000-0000-0000-000000000000
+
 ${CURL} -X POST -H "Content-Type: application/json" \
 -d '{ "username": "foo", "name": "John Doe", "email": "jd@mail.com" }' \
 http://api:${API_PORT}/api/v1/users | jq .

@@ -197,4 +197,4 @@ make db-stop
   - [ ] Probably use [Cursor Pagination](https://www.citusdata.com/blog/2016/03/30/five-ways-to-paginate/)
   - [ ] Change the API spec (V2?) to use cursor pagination
     - [ ] The return values of the API should be wrapped in a `data` field (see [jsonapi](https://jsonapi.org/)), namely [fetching multiple resources](https://jsonapi.org/format/#fetching-resources).
-  - [ ] The response HTTP code should be 200 even if there are no results (I'm returning 204 now - probably not the best choice for a list endpoint. The 204 code is more appropriate for a delete endpoint).
+  - [x] The response HTTP code should be 200 even if there are no results (I'm returning 204 now - probably not the best choice for a list endpoint. The 204 code is more appropriate for a delete endpoint).

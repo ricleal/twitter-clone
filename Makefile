@@ -38,11 +38,13 @@ test: ## Run unit tests
 test_integration: ## Run integration tests
 	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
 
+api-build-e2e:
+	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e build api
 .PHONY: test_e2e
-test_e2e: ## Run end-to-end tests
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes
+test_e2e: api-build-e2e ## Run end-to-end tests
+	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach
+	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl
+	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes
 
 # Instalation: brew install golangci-lint
 .PHONY: lint

@@ -38,7 +38,8 @@ func (t *twitterAPI) GetTweets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(tweets) == 0 {
-		w.WriteHeader(http.StatusNoContent)
+		openapiTweets := make([]openapi.Tweet, 0)
+		json.NewEncoder(w).Encode(openapiTweets) //nolint:errcheck //ignore error
 		return
 	}
 
@@ -94,7 +95,7 @@ func (t *twitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid
 		return
 	}
 	if tweet == nil {
-		sendAPIError(ctx, w, http.StatusNoContent, "Tweet not found", nil)
+		json.NewEncoder(w).Encode(nil) //nolint:errcheck //ignore error
 		return
 	}
 
@@ -118,7 +119,8 @@ func (t *twitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(users) == 0 {
-		w.WriteHeader(http.StatusNoContent)
+		openapiUsers := make([]openapi.User, 0)
+		json.NewEncoder(w).Encode(openapiUsers) //nolint:errcheck //ignore error
 		return
 	}
 
@@ -180,7 +182,7 @@ func (t *twitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.
 		return
 	}
 	if user == nil {
-		sendAPIError(ctx, w, http.StatusNoContent, "User not found", nil)
+		json.NewEncoder(w).Encode(nil) //nolint:errcheck //ignore error
 		return
 	}
 
