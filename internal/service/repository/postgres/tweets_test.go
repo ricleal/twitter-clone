@@ -51,97 +51,82 @@ func (ts *TweetsTestSuite) TestData() {
 	t := postgres.NewTweetStorage(ts.s.DB())
 	u := postgres.NewUserStorage(ts.s.DB())
 
-	// Find all tweets empty DB
-	{
+	ts.Run("Find all tweets empty DB", func() {
 		tweets, err := t.FindAll(ctx)
 		ts.Require().NoError(err)
 		ts.Require().Len(tweets, 0)
-	}
-	// Find tweet empty DB
-	{
+	})
+	ts.Run("Find tweet empty DB", func() {
 		tweet, err := t.FindByID(ctx, uuid.New().String())
 		ts.Require().ErrorIs(err, repository.ErrNotFound)
 		ts.Require().Nil(tweet)
-	}
-
-	{
+	})
+	ts.Run("Create tweet", func() {
 		err := u.Create(ctx, &repository.User{
 			Username: "test",
 			Email:    "test@test.com",
 		})
 		ts.Require().NoError(err)
-	}
-	// Find all users
-	{
+	})
+	ts.Run("Find all users", func() {
 		users, err := u.FindAll(ctx)
 		ts.Require().NoError(err)
 		ts.Require().Len(users, 1)
-	}
-
+	})
 	var userID string
-	// Find user by Username
-	{
+	ts.Run("Find user by username", func() {
 		user, err := u.FindByUsername(ctx, "test")
 		ts.Require().NoError(err)
 		ts.Require().Equal("test", user.Username)
 		userID = user.ID.String()
-	}
-	// Find user by ID
-	{
+	})
+	ts.Run("Find user by ID", func() {
 		user, err := u.FindByID(ctx, userID)
 		ts.Require().NoError(err)
 		ts.Require().Equal("test", user.Username)
-	}
-
-	// Find all tweets with 0 tweet
-	{
+	})
+	ts.Run("Create tweet", func() {
 		tweets, err := t.FindAll(ctx)
 		ts.Require().NoError(err)
 		ts.Require().Len(tweets, 0)
-	}
-	// create a tweet
-	{
+	})
+	ts.Run("Create tweet", func() {
 		tweet := &repository.Tweet{
 			UserID:  uuid.Must(uuid.Parse(userID)),
 			Content: "Lorem ipsum dolor sit amet",
 		}
 		err := t.Create(ctx, tweet)
 		ts.Require().NoError(err)
-	}
-	// Find all tweets with 1 tweet
-	{
+	})
+	ts.Run("Find all tweets with 1 tweet", func() {
 		tweets, err := t.FindAll(ctx)
 		ts.Require().NoError(err)
 		ts.Require().Len(tweets, 1)
-	}
-	// create a tweet
-	{
+	})
+	ts.Run("Create tweet 2", func() {
 		tweet2 := &repository.Tweet{
 			UserID:  uuid.Must(uuid.Parse(userID)),
 			Content: "Ut enim ad minim veniam",
 		}
 		err := t.Create(ctx, tweet2)
 		ts.Require().NoError(err)
-	}
+	})
 	var tweetID string
-	// Find all tweets
-	{
+	ts.Run("Find all tweets", func() {
 		tweets, err := t.FindAll(ctx)
 		ts.Require().NoError(err)
 		ts.Require().Len(tweets, 2)
 		tweetID = tweets[0].ID.String()
-	}
-	// Find tweet by ID
-	{
+	})
+	ts.Run("Find tweet by ID", func() {
 		tweet, err := t.FindByID(ctx, tweetID)
 		ts.Require().NoError(err)
 		ts.Require().NotNil(tweet)
 		ts.Require().Equal(36, len(tweet.ID.String()))
-	}
-	// Find invalid tweet by ID"
-	{
+	})
+	ts.Run("Find invalid tweet by ID", func() {
 		tweet, err := t.FindByID(ctx, uuid.New().String())
 		ts.Require().ErrorIs(err, repository.ErrNotFound)
 		ts.Require().Nil(tweet)
-	}
+	})
 }

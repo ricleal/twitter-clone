@@ -24,6 +24,7 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
+// apiV1Router sets up the API v1 router and mounts it on the root router
 func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService) error {
 	twitterAPI := apiv1.New(su, st)
 
@@ -38,8 +39,8 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 
 	r := chi.NewRouter()
 	r.Use(oapiMiddleware.OapiRequestValidator(swagger))
-	r.Use(middleware.AllowContentType("application/json"))          //nolint:goconst // ignore
-	r.Use(middleware.SetHeader("Content-Type", "application/json")) // nolint:goconst // ignore
+	r.Use(middleware.AllowContentType("application/json")) //nolint:goconst // ignore
+	r.Use(middleware.SetHeader("Content-Type", "application/json"))
 
 	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterAPI, r)))
 
@@ -58,6 +59,7 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 	return nil
 }
 
+// printRoutes prints out the routes registered on a chi router
 func printRoutes(ctx context.Context, r chi.Router) {
 	walkFunc := func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		log.Ctx(ctx).Debug().Str("method", method).Str("route", route).Msg("registered route")
@@ -111,6 +113,7 @@ func main() {
 	}
 }
 
+// serve starts the HTTP server and handles shutdown gracefully
 func serve(ctx context.Context, handler http.Handler, port int) error {
 	srv := &http.Server{
 		Handler:     handler,

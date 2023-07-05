@@ -50,7 +50,6 @@ lint: ## Lint and format source code based on golangci configuration
 	@command -v golangci-lint || (echo "Please install `golangci-lint`" && exit 1)
 	golangci-lint run --fix -v ./...
 
-
 ## DB targets
 
 .PHONY: db-start

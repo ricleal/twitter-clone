@@ -78,6 +78,13 @@ func (ts *APITestIntegrationSuite) TestCreateAndGetUser() {
 
 	userStr := `{ "username": "foo", "name": "John Doe", "email": "jd@mail.com" }`
 	var userID string
+
+	ts.Run("Get users empty DB", func() {
+		var response struct{}
+		statusCode, err := testhelpers.Get(ctx, ts.server.URL+"/users", &response)
+		ts.Require().NoError(err)
+		ts.Require().Equal(http.StatusNoContent, statusCode)
+	})
 	ts.Run("Create user", func() {
 		var response struct{}
 		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/users", userStr, &response)

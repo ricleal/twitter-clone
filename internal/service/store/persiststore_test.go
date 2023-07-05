@@ -48,9 +48,15 @@ func (ts *StoreTestSuite) TearDownTest() {
 
 func (ts *StoreTestSuite) TestTransaction() {
 	ctx := context.Background()
-	s := store.NewPersistentStore(ts.s.DB())
+	mainStore := store.NewPersistentStore(ts.s.DB())
 
-	if err := s.ExecTx(ctx, func(s store.Store) error {
+	// Find all tweets outside of transaction. Should be empty
+	tweetsRepo := mainStore.Tweets()
+	tweets, err := tweetsRepo.FindAll(ctx)
+	ts.Require().NoError(err)
+	ts.Require().Len(tweets, 0)
+
+	if err := mainStore.ExecTx(ctx, func(s store.Store) error {
 		tweetsRepo := s.Tweets()
 		usersRepo := s.Users()
 
@@ -82,4 +88,9 @@ func (ts *StoreTestSuite) TestTransaction() {
 	}); err != nil {
 		ts.Require().NoError(err)
 	}
+
+	// Find all tweets outside of transaction
+	tweets, err = tweetsRepo.FindAll(ctx)
+	ts.Require().NoError(err)
+	ts.Require().Len(tweets, 1)
 }
