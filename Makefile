@@ -38,11 +38,9 @@ test: ## Run unit tests
 test_integration: ## Run integration tests
 	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
 
-api-build-e2e:
-	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e build api
 .PHONY: test_e2e
-test_e2e: api-build-e2e ## Run end-to-end tests
-	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach
+test_e2e: ## Run end-to-end tests
+	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach --build
 	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl
 	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes
 
@@ -71,12 +69,10 @@ db-cli: ## Start the Postgres CLI
 #
 ## API targets
 
-api-build:
-	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api build api-dev
 
 .PHONY: api-start
-api-start: api-build ## Run docker API container
-	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api up --detach api-dev
+api-start: ## Run docker API container
+	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api up --detach --build api-dev
 
 .PHONY: api-stop
 api-stop: ## Stop docker API container
@@ -136,12 +132,9 @@ help:
 
 #### Docker targets ####
 
-docker-build:
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml build
-
 .PHONY: docker-up
-docker-up: docker-build ## Run docker container
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml up
+docker-up: ## Run docker container
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --build
 
 .PHONY: docker-down
 docker-down: ## Stop docker container
