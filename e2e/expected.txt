@@ -1,28 +1,22 @@
 []
+200
 null
-[
-  {
-    "email": "jd@mail.com",
-    "id": "3e2186fa-e80f-4726-a010-eb8a102c7800",
-    "name": "John Doe",
-    "username": "foo"
-  }
-]
-{
-  "email": "jd@mail.com",
-  "id": "3e2186fa-e80f-4726-a010-eb8a102c7800",
-  "name": "John Doe",
-  "username": "foo"
-}
-[
-  {
-    "content": "Hello World!",
-    "id": "4828897e-482b-4298-81cf-37a1c7c4d792",
-    "user_id": "3e2186fa-e80f-4726-a010-eb8a102c7800"
-  }
-]
-{
-  "content": "Hello World!",
-  "id": "4828897e-482b-4298-81cf-37a1c7c4d792",
-  "user_id": "3e2186fa-e80f-4726-a010-eb8a102c7800"
-}
+200
+[]
+200
+null
+200
+Invalid format for parameter id: error unmarshalling 'id1' text as *uuid.UUID: invalid UUID length: 3
+400
+Invalid format for parameter id: error unmarshalling '123456' text as *uuid.UUID: invalid UUID length: 6
+400
+201
+[{"email":"jd@mail.com","id":"b46043f9-06df-4f54-b066-3331b6b2ac59","name":"John Doe","username":"foo"}]
+200
+{"email":"jd@mail.com","id":"b46043f9-06df-4f54-b066-3331b6b2ac59","name":"John Doe","username":"foo"}
+200
+201
+[{"content":"Hello World!","id":"8e9f3fb5-f63c-4ea7-9369-23ad6ad2befb","user_id":"b46043f9-06df-4f54-b066-3331b6b2ac59"}]
+200
+{"content":"Hello World!","id":"8e9f3fb5-f63c-4ea7-9369-23ad6ad2befb","user_id":"b46043f9-06df-4f54-b066-3331b6b2ac59"}
+200

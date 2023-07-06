@@ -7,8 +7,8 @@ echo "Running E2E Tests"
 
 # compare results
 echo "Comparing Results"
-# The regex would be: '  "(user_)?id":.*$' but it doesn't work on the container :shrug:
-errors=$(diff -I '  ".*id": .*$' /e2e/results.txt /e2e/expected.txt)
+# The regex would be: '"(user_)?id"...' but it doesn't work on the container :shrug:
+errors=$(diff -I '".*id":".*"' /e2e/results.txt /e2e/expected.txt)
 
 # exit with error code if there are differences
 if [ -n "$errors" ]; then
