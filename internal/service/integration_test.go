@@ -54,53 +54,63 @@ func (ts *TweetsTestSuite) TestValid() {
 	su := service.NewUserService(s)
 	ctx := context.Background()
 
-	// get all users empty DB
-	users, err := su.FindAll(ctx)
-	ts.Require().NoError(err)
-	ts.Require().Len(users, 0)
-
-	// get an user by id empty DB
-	user, err := su.FindByID(ctx, uuid.New().String())
-	ts.Require().NoError(err)
-	ts.Require().Nil(user)
-
-	err = su.Create(ctx, &entities.User{
-		Username: "test",
-		Email:    "test@test.com",
-		Name:     "John Doe",
+	ts.Run("get all users empty DB", func() {
+		users, err := su.FindAll(ctx)
+		ts.Require().NoError(err)
+		ts.Require().Len(users, 0)
 	})
-	ts.Require().NoError(err)
-	// get all users
-	users, err = su.FindAll(ctx)
-	ts.Require().NoError(err)
-	ts.Require().Len(users, 1)
 
-	// create a tweet
-	err = st.Create(ctx, &entities.Tweet{
-		UserID:  users[0].ID,
-		Content: "Hello World",
+	ts.Run("get an user by id empty DB", func() {
+		user, err := su.FindByID(ctx, uuid.New().String())
+		ts.Require().NoError(err)
+		ts.Require().Nil(user)
+
+		err = su.Create(ctx, &entities.User{
+			Username: "test",
+			Email:    "test@test.com",
+			Name:     "John Doe",
+		})
+		ts.Require().NoError(err)
 	})
-	ts.Require().NoError(err)
 
-
-	err = st.Create(ctx, &entities.Tweet{
-		UserID:  uuid.New(),
-		Content: "user does not exist",
+	var userID uuid.UUID
+	ts.Run("get all users", func() {
+		users, err := su.FindAll(ctx)
+		ts.Require().NoError(err)
+		ts.Require().Len(users, 1)
+		userID = users[0].ID
 	})
-	ts.Require().Error(err)
-	ts.Require().Contains(err.Error(), "invalid user id")
 
-	// get all tweets
-	tweets, err := st.FindAll(ctx)
-	ts.Require().NoError(err)
-	ts.Require().Len(tweets, 1)
-
-	// create a tweet with invalid user
-	err = st.Create(ctx, &entities.Tweet{
-		UserID:  uuid.New(),
-		Content: "Hello World",
+	ts.Run("create a tweet", func() {
+		err := st.Create(ctx, &entities.Tweet{
+			UserID:  userID,
+			Content: "Hello World",
+		})
+		ts.Require().NoError(err)
 	})
-	ts.Require().ErrorIs(err, entities.ErrInvalidUserID)
+
+	ts.Run("create a tweet with invalid user", func() {
+		err := st.Create(ctx, &entities.Tweet{
+			UserID:  uuid.New(),
+			Content: "user does not exist",
+		})
+		ts.Require().Error(err)
+		ts.Require().Contains(err.Error(), "invalid user id")
+	})
+
+	ts.Run("get all tweets", func() {
+		tweets, err := st.FindAll(ctx)
+		ts.Require().NoError(err)
+		ts.Require().Len(tweets, 1)
+	})
+
+	ts.Run("create a tweet with invalid user", func() {
+		err := st.Create(ctx, &entities.Tweet{
+			UserID:  uuid.New(),
+			Content: "Hello World",
+		})
+		ts.Require().ErrorIs(err, entities.ErrInvalidUserID)
+	})
 }
 
 func (ts *TweetsTestSuite) TestInvalid() {

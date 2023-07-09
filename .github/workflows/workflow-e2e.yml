@@ -1,18 +1,24 @@
-Name: E2E Workflow
+name: Unit, Integration and E2E tests
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ "main" ]
 
 jobs:
   build:
-    timeout-minutes: 10
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Runs Tests
-        run: make test{,_integration,_e2e}
+      - name: Runs Unit Tests
+        run: make test
+
+      - name: Runs Integration Tests
+        run: make test_integration
+
+      - name: Runs E2E Tests
+        run: make test_e2e

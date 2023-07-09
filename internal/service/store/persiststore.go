@@ -46,7 +46,7 @@ func (s *persistentStore) ExecTx(ctx context.Context, fn func(Store) error) erro
 	err = fn(newStore)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("ExecTx: %w: Rollback: %w", err, rbErr)
+			return fmt.Errorf("ExecTx: %s: Rollback: %w", err.Error(), rbErr)
 		}
 		return fmt.Errorf("ExecTx: %w", err)
 	}

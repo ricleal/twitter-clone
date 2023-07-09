@@ -15,7 +15,7 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 
 # Build
-RUN go build -v -o /app/app ./cmd/twitter
+RUN go build -o /app/app ./cmd/twitter
 
 
 #################

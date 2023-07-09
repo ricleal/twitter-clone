@@ -49,48 +49,52 @@ func (ts *StoreTestSuite) TearDownTest() {
 func (ts *StoreTestSuite) TestTransaction() {
 	ctx := context.Background()
 	mainStore := store.NewPersistentStore(ts.s.DB())
-
-	// Find all tweets outside of transaction. Should be empty
 	tweetsRepo := mainStore.Tweets()
-	tweets, errOut := tweetsRepo.FindAll(ctx)
-	ts.Require().NoError(errOut)
-	ts.Require().Len(tweets, 0)
 
-	if errOut := mainStore.ExecTx(ctx, func(s store.Store) error {
-		tweetsRepoLocal := s.Tweets()
-		usersRepoLocal := s.Users()
+	ts.Run("Find all tweets outside of transaction", func() {
+		tweets, errOut := tweetsRepo.FindAll(ctx)
+		ts.Require().NoError(errOut)
+		ts.Require().Len(tweets, 0)
+	})
 
-		// create a user
-		err := usersRepoLocal.Create(ctx, &repository.User{
-			Username: "test",
-			Email:    "test@test.com",
-		})
-		ts.Require().NoError(err)
+	ts.Run("create a user and tweet inside a transaction", func() {
+		if errOut := mainStore.ExecTx(ctx, func(s store.Store) error {
+			tweetsRepoLocal := s.Tweets()
+			usersRepoLocal := s.Users()
 
-		// Find user by Username
-		user, err := usersRepoLocal.FindByUsername(ctx, "test")
-		ts.Require().NoError(err)
-		ts.Require().Equal("test", user.Username)
+			// create a user
+			err := usersRepoLocal.Create(ctx, &repository.User{
+				Username: "test",
+				Email:    "test@test.com",
+			})
+			ts.Require().NoError(err)
 
-		// create a tweet
-		tweet := &repository.Tweet{
-			UserID:  user.ID,
-			Content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+			// Find user by Username
+			user, err := usersRepoLocal.FindByUsername(ctx, "test")
+			ts.Require().NoError(err)
+			ts.Require().Equal("test", user.Username)
+
+			// create a tweet
+			tweet := &repository.Tweet{
+				UserID:  user.ID,
+				Content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+			}
+			err = tweetsRepoLocal.Create(ctx, tweet)
+			ts.Require().NoError(err)
+
+			// Find all tweets
+			tweetsLocal, err := tweetsRepoLocal.FindAll(ctx)
+			ts.Require().NoError(err)
+			ts.Require().Len(tweetsLocal, 1)
+			return nil
+		}); errOut != nil {
+			ts.T().Errorf("ExecTx: %v", errOut)
 		}
-		err = tweetsRepoLocal.Create(ctx, tweet)
-		ts.Require().NoError(err)
+	})
 
-		// Find all tweets
-		tweetsLocal, err := tweetsRepoLocal.FindAll(ctx)
+	ts.Run("Find all tweets outside of transaction", func() {
+		tweets, err := tweetsRepo.FindAll(ctx)
 		ts.Require().NoError(err)
-		ts.Require().Len(tweetsLocal, 1)
-		return nil
-	}); errOut != nil {
-		ts.T().Errorf("ExecTx: %v", errOut)
-	}
-
-	// Find all tweets outside of transaction
-	tweets, err := tweetsRepo.FindAll(ctx)
-	ts.Require().NoError(err)
-	ts.Require().Len(tweets, 1)
+		ts.Require().Len(tweets, 1)
+	})
 }

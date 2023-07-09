@@ -1,3 +1,8 @@
+![Unit, Integration and E2E tests](https://github.com/ricleal/twitter-clone/actions/workflows/workflow-e2e.yml/badge.svg)
+
+![Build and Lint](https://github.com/ricleal/twitter-clone/actions/workflows/workflow-go.yml/badge.svg)
+
+
 # Twitter Clone
 
 ## Objective
