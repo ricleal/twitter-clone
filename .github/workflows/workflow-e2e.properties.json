@@ -1,0 +1,7 @@
+{
+    "name": "E2E Workflow",
+    "description": "All tests workflow.",
+    "categories": [
+        "Go"
+    ]
+}
