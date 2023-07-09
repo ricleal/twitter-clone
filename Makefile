@@ -42,7 +42,14 @@ test_integration: ## Run integration tests
 test_e2e: ## Run end-to-end tests
 	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach --build
 	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl
-	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes
+	@OUT=$$( $(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl | tail -n 1) ; \
+	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes; \
+	if [ "$${OUT:(-15)}" != "PASS: E2E Tests" ]; then \
+		echo "E2E tests failed:"; \
+		exit 1; \
+	else \
+		echo "E2E tests passed"; \
+	fi
 
 # Instalation: brew install golangci-lint
 .PHONY: lint
