@@ -1,3 +1,8 @@
+# Makefile settings
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := help
+
 # DB settings
 DB_HOSTNAME ?= localhost
 DB_PORT ?= 5432
