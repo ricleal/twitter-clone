@@ -1,12 +1,11 @@
 #!/bin/sh
 
-echo "Running E2E Tests"
+echo "E2E Tests"
 
 # launch external requests
 /e2e/requests.sh > /e2e/results.txt
 
 # compare results
-echo "Comparing Results"
 # The regex would be: '"(user_)?id"...' but it doesn't work on the container :shrug:
 errors=$(diff -I '".*id":".*"' /e2e/results.txt /e2e/expected.txt)
 
