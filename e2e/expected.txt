@@ -20,3 +20,5 @@ Invalid format for parameter id: error unmarshalling '123456' text as *uuid.UUID
 200
 {"content":"Hello World!","id":"8e9f3fb5-f63c-4ea7-9369-23ad6ad2befb","user_id":"b46043f9-06df-4f54-b066-3331b6b2ac59"}
 200
+{"code":400,"message":"Invalid user ID"}
+400

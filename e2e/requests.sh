@@ -1,7 +1,6 @@
 #!/bin/sh
 
 CURL='curl -s -w %{http_code}\n'
-HOSTNAME=api
 
 ## Get from an empty DB
 ${CURL} http://${HOSTNAME}:${API_PORT}/api/v1/users
@@ -39,3 +38,8 @@ tweet_id=$(${CURL} http://${HOSTNAME}:${API_PORT}/api/v1/tweets | jq -r -R 'from
 
 ## Get a tweet by id
 ${CURL} http://${HOSTNAME}:${API_PORT}/api/v1/tweets/$tweet_id
+
+## Create a tweeter with an non-existing user_id
+${CURL} -X POST -H "Content-Type: application/json" \
+-d '{"user_id":"00000000-0000-0000-0000-000000000000", "content": "Hello World!" }' \
+http://${HOSTNAME}:${API_PORT}/api/v1/tweets

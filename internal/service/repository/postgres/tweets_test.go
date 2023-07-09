@@ -61,7 +61,7 @@ func (ts *TweetsTestSuite) TestData() {
 		ts.Require().ErrorIs(err, repository.ErrNotFound)
 		ts.Require().Nil(tweet)
 	})
-	ts.Run("Create tweet", func() {
+	ts.Run("Create user", func() {
 		err := u.Create(ctx, &repository.User{
 			Username: "test",
 			Email:    "test@test.com",
@@ -97,6 +97,14 @@ func (ts *TweetsTestSuite) TestData() {
 		}
 		err := t.Create(ctx, tweet)
 		ts.Require().NoError(err)
+	})
+	ts.Run("Create tweet with non existing user", func() {
+		tweet := &repository.Tweet{
+			UserID:  uuid.New(),
+			Content: "user does not exist",
+		}
+		err := t.Create(ctx, tweet)
+		ts.Require().Contains(err.Error(), "violates foreign key constraint")
 	})
 	ts.Run("Find all tweets with 1 tweet", func() {
 		tweets, err := t.FindAll(ctx)

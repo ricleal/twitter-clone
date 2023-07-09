@@ -74,7 +74,7 @@ func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 	if err := t.tweetService.Create(ctx, tweet); err != nil {
 		if errors.Is(err, entities.ErrInvalidUserID) {
-			sendAPIError(ctx, w, http.StatusNoContent, "Invalid user ID", err)
+			sendAPIError(ctx, w, http.StatusBadRequest, "Invalid user ID", err)
 			return
 		}
 		sendAPIError(ctx, w, http.StatusInternalServerError, "Error creating tweet", err)

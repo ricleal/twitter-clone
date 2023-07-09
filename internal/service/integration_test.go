@@ -82,6 +82,14 @@ func (ts *TweetsTestSuite) TestValid() {
 	})
 	ts.Require().NoError(err)
 
+
+	err = st.Create(ctx, &entities.Tweet{
+		UserID:  uuid.New(),
+		Content: "user does not exist",
+	})
+	ts.Require().Error(err)
+	ts.Require().Contains(err.Error(), "invalid user id")
+
 	// get all tweets
 	tweets, err := st.FindAll(ctx)
 	ts.Require().NoError(err)

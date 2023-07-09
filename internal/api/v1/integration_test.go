@@ -153,7 +153,7 @@ func (ts *APITestIntegrationSuite) TestCreateAndGetTweets() {
 		var response struct{}
 		statusCode, err := testhelpers.Post(ctx, ts.server.URL+"/tweets", tweetStr, &response)
 		ts.Require().NoError(err)
-		ts.Require().Equal(http.StatusNoContent, statusCode)
+		ts.Require().Equal(http.StatusBadRequest, statusCode)
 	})
 	var tweetID string
 	ts.Run("Get tweets", func() {

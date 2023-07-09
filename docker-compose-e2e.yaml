@@ -54,6 +54,7 @@ services:
     image: badouralix/curl-jq:ubuntu
     environment:
       API_PORT: ${API_PORT}
+      HOSTNAME: api
     volumes:
       - ./e2e:/e2e
     depends_on:
