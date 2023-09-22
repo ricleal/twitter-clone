@@ -21,13 +21,15 @@
 
 ### Backend
 
-I have used an architecture following the same principles as the [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) by Robert C. Martin. I have included the [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html) to abstract the data layer from the business logic. The packages worth mentioning are:
+I have used an architecture following a mix of principles lined up in the Onion, Clean and Hexagonal Architecture and Domain-driven design (DDD). I have included the [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html) to abstract the data layer from the business logic. 
 
-- `internal/service/repository/postgres/orm`: the ORM auto generated code from the database schema that [SQLBoiler](https://github.com/volatiletech/sqlboiler) generates.
+The packages worth mentioning are:
 
-There are 2 repositories:
-- `internal/service/repository/postgres`: the repository that implements the interfaces defined in `internal/service/repository/interfaces.go`
-- `internal/service/repository/memory`: a memory mock repository that implements the interfaces defined in `internal/service/repositoryinterfaces.go`. This is used for unit testing.
+- `internal/service/repository/postgres/orm`: the "database-first" ORM auto generated code from the database schema that [SQLBoiler](https://github.com/volatiletech/sqlboiler) generates.
+
+- There are 2 repositories:
+  - `internal/service/repository/postgres`: the repository that implements the interfaces defined in `internal/service/repository/interfaces.go`
+  - `internal/service/repository/memory`: a memory mock repository that implements the interfaces defined in `internal/service/repositoryinterfaces.go`. This is used for unit testing.
 
 To interact with this repositories, there is a [Store](internal/service/store). This store can chain multiple repository operations in a single transaction. It sort of follows the same principles as in the [Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html) pattern. There is a in-memory store and a persistent (postgres) store. The in-memory store is used for unit testing. The service layer uses the store to interact with the repositories. It never interacts directly with the repositories.
 
