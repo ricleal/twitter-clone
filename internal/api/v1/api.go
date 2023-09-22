@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/ricleal/twitter-clone/internal/api/v1/openapi"
 	"github.com/ricleal/twitter-clone/internal/entities"

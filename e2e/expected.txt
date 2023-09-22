@@ -6,9 +6,9 @@ null
 200
 null
 200
-Invalid format for parameter id: error unmarshalling 'id1' text as *uuid.UUID: invalid UUID length: 3
+Invalid format for parameter id: error unmarshaling 'id1' text as *uuid.UUID: invalid UUID length: 3
 400
-Invalid format for parameter id: error unmarshalling '123456' text as *uuid.UUID: invalid UUID length: 6
+Invalid format for parameter id: error unmarshaling '123456' text as *uuid.UUID: invalid UUID length: 6
 400
 201
 [{"email":"jd@mail.com","id":"b46043f9-06df-4f54-b066-3331b6b2ac59","name":"John Doe","username":"foo"}]

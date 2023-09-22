@@ -41,7 +41,7 @@ test: ## Run unit tests
 
 .PHONY: test_integration
 test_integration: ## Run integration tests
-	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -v ./... -tags=integration
+	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -race ./... -tags=integration
 
 .PHONY: test_e2e
 test_e2e: ## Run end-to-end tests
