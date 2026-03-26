@@ -11,8 +11,17 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
 
+func newTestTweetHandler(t *testing.T) *memory.TweetHandler {
+	t.Helper()
+	db, err := memory.NewDB()
+	if err != nil {
+		t.Fatalf("failed to create in-memory DB: %v", err)
+	}
+	return memory.NewTweetHandler(db)
+}
+
 func TestTweetHandlerCreate(t *testing.T) {
-	tweetHandler := memory.NewTweetHandler()
+	tweetHandler := newTestTweetHandler(t)
 
 	// Test creating a new tweet
 	tweet := &repository.Tweet{
@@ -45,7 +54,7 @@ func TestTweetHandlerCreate(t *testing.T) {
 }
 
 func TestTweetHandlerFindAll(t *testing.T) {
-	tweetHandler := memory.NewTweetHandler()
+	tweetHandler := newTestTweetHandler(t)
 
 	// Create some tweets
 	tweet1 := &repository.Tweet{
@@ -77,18 +86,21 @@ func TestTweetHandlerFindAll(t *testing.T) {
 		t.Errorf("Expected 2 tweets, got %d", len(tweets))
 	}
 
-	// Verify the tweet contents
-	if tweets[0].Content != tweet1.Content {
-		t.Errorf("Expected tweet content %q, got %q", tweet1.Content, tweets[0].Content)
+	// Verify both tweet contents are present (order not guaranteed)
+	contentSet := make(map[string]bool)
+	for _, tw := range tweets {
+		contentSet[tw.Content] = true
 	}
-
-	if tweets[1].Content != tweet2.Content {
-		t.Errorf("Expected tweet content %q, got %q", tweet2.Content, tweets[1].Content)
+	if !contentSet[tweet1.Content] {
+		t.Errorf("Expected tweet content %q to be present", tweet1.Content)
+	}
+	if !contentSet[tweet2.Content] {
+		t.Errorf("Expected tweet content %q to be present", tweet2.Content)
 	}
 }
 
 func TestTweetHandlerFindByID(t *testing.T) {
-	tweetHandler := memory.NewTweetHandler()
+	tweetHandler := newTestTweetHandler(t)
 
 	// Create a tweet
 	tweet := &repository.Tweet{
@@ -113,7 +125,7 @@ func TestTweetHandlerFindByID(t *testing.T) {
 }
 
 func TestTweetHandlerFindByIDNotFound(t *testing.T) {
-	tweetHandler := memory.NewTweetHandler()
+	tweetHandler := newTestTweetHandler(t)
 
 	// Retrieve a non-existent tweet by ID
 	_, err := tweetHandler.FindByID(context.Background(), "non-existent-id")

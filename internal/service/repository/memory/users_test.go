@@ -11,8 +11,17 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
 
+func newTestUserHandler(t *testing.T) *memory.UserHandler {
+	t.Helper()
+	db, err := memory.NewDB()
+	if err != nil {
+		t.Fatalf("failed to create in-memory DB: %v", err)
+	}
+	return memory.NewUserHandler(db)
+}
+
 func TestUserHandlerCreate(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Test creating a new user
 	user := &repository.User{
@@ -46,7 +55,7 @@ func TestUserHandlerCreate(t *testing.T) {
 }
 
 func TestUserHandlerFindAll(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Create some users
 	user1 := &repository.User{
@@ -80,18 +89,21 @@ func TestUserHandlerFindAll(t *testing.T) {
 		t.Errorf("Expected 2 users, got %d", len(users))
 	}
 
-	// Verify the usernames
-	if users[0].Username != user1.Username {
-		t.Errorf("Expected username %q, got %q", user1.Username, users[0].Username)
+	// Verify both usernames are present (order not guaranteed)
+	usernameSet := make(map[string]bool)
+	for _, u := range users {
+		usernameSet[u.Username] = true
 	}
-
-	if users[1].Username != user2.Username {
-		t.Errorf("Expected username %q, got %q", user2.Username, users[1].Username)
+	if !usernameSet[user1.Username] {
+		t.Errorf("Expected username %q to be present", user1.Username)
+	}
+	if !usernameSet[user2.Username] {
+		t.Errorf("Expected username %q to be present", user2.Username)
 	}
 }
 
 func TestUserHandlerFindByID(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Create a user
 	user := &repository.User{
@@ -117,7 +129,7 @@ func TestUserHandlerFindByID(t *testing.T) {
 }
 
 func TestUserHandlerFindByIDNotFound(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Retrieve a non-existent user by ID
 	_, err := userHandler.FindByID(context.Background(), "non-existent-id")
@@ -127,7 +139,7 @@ func TestUserHandlerFindByIDNotFound(t *testing.T) {
 }
 
 func TestUserHandlerFindByUsername(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Create a user
 	user := &repository.User{
@@ -153,7 +165,7 @@ func TestUserHandlerFindByUsername(t *testing.T) {
 }
 
 func TestUserHandlerFindByUsernameNotFound(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Retrieve a non-existent user by username
 	_, err := userHandler.FindByUsername(context.Background(), "non-existent-username")
@@ -163,7 +175,7 @@ func TestUserHandlerFindByUsernameNotFound(t *testing.T) {
 }
 
 func TestUserHandlerFindByEmail(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Create a user
 	user := &repository.User{
@@ -189,7 +201,7 @@ func TestUserHandlerFindByEmail(t *testing.T) {
 }
 
 func TestUserHandlerFindByEmailNotFound(t *testing.T) {
-	userHandler := memory.NewUserHandler()
+	userHandler := newTestUserHandler(t)
 
 	// Retrieve a non-existent user by email
 	_, err := userHandler.FindByEmail(context.Background(), "non-existent-email@example.com")

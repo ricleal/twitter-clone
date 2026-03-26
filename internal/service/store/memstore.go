@@ -3,32 +3,32 @@ package store
 import (
 	"context"
 
+	memdb "github.com/hashicorp/go-memdb"
+
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
 
 type memStore struct {
+	db               *memdb.MemDB
 	TransactionError bool
-	users            repository.UserRepository
-	tweets           repository.TweetRepository
 }
 
-// NewMemStore creates a new memory store.
+// NewMemStore creates a new memory store backed by go-memdb.
 func NewMemStore() *memStore {
-	// Note that we are using the memory repository implementations here.
-	// When we use Tweets() or Users() we are returning the current memory repository
-	return &memStore{
-		users:  memory.NewUserHandler(),
-		tweets: memory.NewTweetHandler(),
+	db, err := memory.NewDB()
+	if err != nil {
+		panic("failed to create in-memory database: " + err.Error())
 	}
+	return &memStore{db: db}
 }
 
 func (s *memStore) Tweets() repository.TweetRepository {
-	return s.tweets
+	return memory.NewTweetHandler(s.db)
 }
 
 func (s *memStore) Users() repository.UserRepository {
-	return s.users
+	return memory.NewUserHandler(s.db)
 }
 
 func (s *memStore) ExecTx(_ context.Context, fn func(Store) error) error {

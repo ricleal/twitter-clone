@@ -150,8 +150,12 @@ func (ts *APITestSuite) TestCreateAndGetTweets() {
 		ts.Require().NoError(err)
 		ts.Require().Equal(http.StatusOK, statusCode)
 		ts.Require().Len(response, 2)
-		ts.Require().Equal("Hello World", response[0].Content)
-		ts.Require().Equal("Hello World 2", response[1].Content)
+		contents := map[string]bool{}
+		for _, t := range response {
+			contents[t.Content] = true
+		}
+		ts.Require().True(contents["Hello World"])
+		ts.Require().True(contents["Hello World 2"])
 	})
 	ts.Run("Get tweet", func() {
 		var response openapi.Tweet
