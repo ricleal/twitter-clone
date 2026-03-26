@@ -9,13 +9,13 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 )
 
-// persistentStore is a store backed by a PostgreSQL database.
+// persistentStore is a store backed by a PostgreSQL database connection.
 type persistentStore struct {
-	db bob.Executor
+	db bob.DB
 }
 
-// persistentStoreTx is a transaction-scoped store that wraps a bob.Executor.
-// It does not support nested transactions, so ExecTx is a no-op passthrough.
+// persistentStoreTx is a transaction-scoped store. ExecTx is a passthrough
+// because the underlying driver does not support nested transactions.
 type persistentStoreTx struct {
 	db bob.Executor
 }
@@ -35,14 +35,9 @@ func (s *persistentStore) Users() repository.UserRepository {
 	return postgres.NewUserStorage(s.db)
 }
 
-// ExecTx executes the given function within a database transaction.
+// ExecTx executes fn within a database transaction.
 func (s *persistentStore) ExecTx(ctx context.Context, fn func(Store) error) error {
-	db, ok := s.db.(bob.DB)
-	if !ok {
-		// Already inside a transaction — run fn directly without nesting.
-		return fn(s)
-	}
-	return db.RunInTx(ctx, nil, func(ctx context.Context, tx bob.Executor) error {
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bob.Executor) error {
 		return fn(&persistentStoreTx{db: tx})
 	})
 }
