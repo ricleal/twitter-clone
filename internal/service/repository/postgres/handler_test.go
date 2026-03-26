@@ -5,6 +5,8 @@ package postgres_test
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"testing"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -43,7 +45,7 @@ func (ts *PostgresTestSuite) TearDownTest() {
 // This tests only that the connection to the DB is working and also the migrations.
 func (ts *PostgresTestSuite) TestPostgres() {
 	ctx := context.Background()
-	s, err := postgres.NewStorage(ctx)
+	s, err := postgres.NewStorage(ctx, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	require.NoError(ts.T(), err)
 	require.NotNil(ts.T(), s.DB())
 	err = s.DB().Ping()

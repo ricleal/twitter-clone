@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -31,8 +30,8 @@ func parseLevel(logLevel string) (slog.Level, error) {
 	}
 }
 
-// InitLog initializes the logger with the given log level and sets it as default.
-func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
+// InitLog creates and returns a logger configured at the given log level.
+func InitLog(logLevel string) (*slog.Logger, error) {
 	level, err := parseLevel(logLevel)
 	if err != nil {
 		return nil, fmt.Errorf("invalid log level: %s", logLevel)
@@ -44,21 +43,16 @@ func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
 	} else {
 		handler = slog.NewJSONHandler(os.Stdout, opts)
 	}
-	slog.SetDefault(slog.New(handler))
-	return ctx, nil
+	return slog.New(handler), nil
 }
 
-// InitLogFromEnv initializes the logger with the log level from the LOG_LEVEL
+// InitLogFromEnv creates and returns a logger configured from the LOG_LEVEL
 // environment variable. If the variable is not set, it defaults to info.
-func InitLogFromEnv(ctx context.Context) (context.Context, error) {
+func InitLogFromEnv() (*slog.Logger, error) {
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel == "" {
-		slog.Warn( //nolint:gosec,sloglint // G706: logLevel is from env; logger not yet configured
-			"No environment variable LOG_LEVEL, setting it to info",
-			"level",
-			logLevel,
-		)
+		fmt.Fprintln(os.Stderr, "warn: LOG_LEVEL not set, defaulting to info")
 		logLevel = "info"
 	}
-	return InitLog(ctx, logLevel)
+	return InitLog(logLevel)
 }

@@ -30,8 +30,8 @@ const (
 	shutdownTimeout   = 10 * time.Second // graceful shutdown deadline
 )
 
-func apiV1Router(root *http.ServeMux, su service.UserService, st service.TweetService) error {
-	twitterAPI := apiv1.New(su, st)
+func apiV1Router(root *http.ServeMux, logger *slog.Logger, su service.UserService, st service.TweetService) error {
+	twitterAPI := apiv1.New(logger, su, st)
 
 	swagger, err := openapiv1.GetSwagger()
 	if err != nil {
@@ -70,7 +70,7 @@ func apiV1Router(root *http.ServeMux, su service.UserService, st service.TweetSe
 
 func main() {
 	ctx := context.Background()
-	ctx, err := InitLogFromEnv(ctx)
+	logger, err := InitLogFromEnv()
 	if err != nil {
 		panic(fmt.Sprintf("Error initializing logging: %v", err))
 	}
@@ -78,20 +78,15 @@ func main() {
 	port := flag.Int("port", 8888, "Port for the HTTP server")
 	flag.Parse()
 
-	if runErr := run(ctx, *port); runErr != nil {
-		slog.ErrorContext( //nolint:sloglint // global logger configured via slog.SetDefault
-			ctx,
-			"fatal error",
-			errLogKey,
-			runErr,
-		)
+	if runErr := run(ctx, logger, *port); runErr != nil {
+		logger.Error("fatal error", errLogKey, runErr)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, port int) error {
+func run(ctx context.Context, logger *slog.Logger, port int) error {
 	// Set up our data store
-	dbServer, err := postgres.NewStorage(ctx)
+	dbServer, err := postgres.NewStorage(ctx, logger)
 	if err != nil {
 		return fmt.Errorf("connecting to database: %w", err)
 	}
@@ -105,7 +100,7 @@ func run(ctx context.Context, port int) error {
 	mux := http.NewServeMux()
 
 	// Set up API v1
-	if routerErr := apiV1Router(mux, su, st); routerErr != nil {
+	if routerErr := apiV1Router(mux, logger, su, st); routerErr != nil {
 		return fmt.Errorf("setting up api router: %w", routerErr)
 	}
 
@@ -115,10 +110,10 @@ func run(ctx context.Context, port int) error {
 	h = middleware.Recoverer(h)
 	h = middleware.Logger(h)
 
-	return serve(ctx, h, port)
+	return serve(ctx, logger, h, port)
 }
 
-func serve(ctx context.Context, handler http.Handler, port int) error {
+func serve(ctx context.Context, logger *slog.Logger, handler http.Handler, port int) error {
 	srv := &http.Server{
 		Handler:     handler,
 		Addr:        fmt.Sprintf(":%d", port),
@@ -128,7 +123,7 @@ func serve(ctx context.Context, handler http.Handler, port int) error {
 
 	errChan := make(chan error)
 	go func() {
-		slog.InfoContext(ctx, "serving http on port", "port", port)
+		logger.InfoContext(ctx, "serving http on port", "port", port)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			errChan <- fmt.Errorf("failed to start server: %w", err)
 		}
@@ -147,15 +142,12 @@ func serve(ctx context.Context, handler http.Handler, port int) error {
 	case <-ctx.Done():
 	}
 
-	slog.InfoContext(ctx, "shutting down...") //nolint:sloglint // global logger configured via slog.SetDefault
+	logger.InfoContext(ctx, "shutting down...")
 	ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown gracefully: %w", err)
 	}
-	slog.InfoContext( //nolint:sloglint // global logger configured via slog.SetDefault
-		ctx,
-		"Server shutdown gracefully",
-	)
+	logger.InfoContext(ctx, "Server shutdown gracefully")
 	return nil
 }

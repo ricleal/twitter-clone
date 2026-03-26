@@ -5,6 +5,8 @@ package v1_test
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,9 +42,10 @@ func TestAPITestIntegrationSuite(t *testing.T) {
 func (ts *APITestIntegrationSuite) SetupTest() {
 	var err error
 	ctx := context.Background()
+	nopLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
-	ts.s, err = postgres.NewStorage(ctx)
+	ts.s, err = postgres.NewStorage(ctx, nopLogger)
 	require.NoError(ts.T(), err)
 
 	s := store.NewPersistentStore(ts.s.DB())
@@ -50,7 +53,7 @@ func (ts *APITestIntegrationSuite) SetupTest() {
 	su := service.NewUserService(s)
 
 	// set up our API
-	twitterAPI := api.New(su, st)
+	twitterAPI := api.New(nopLogger, su, st)
 	mux := http.NewServeMux()
 	openapi.HandlerFromMux(twitterAPI, mux)
 	ts.server = httptest.NewServer(mux)

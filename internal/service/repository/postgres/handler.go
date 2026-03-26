@@ -31,22 +31,20 @@ func open(_ context.Context) (*sql.DB, error) {
 // Storage is struct that holds the database connection.
 type Storage struct {
 	dbConn bob.DB
+	logger *slog.Logger
 }
 
 // NewStorage returns a new Handler with a database connection.
-func NewStorage(ctx context.Context) (*Storage, error) {
+func NewStorage(ctx context.Context, logger *slog.Logger) (*Storage, error) {
+	log := logger.With("component", "postgres")
 	db, err := open(ctx)
 	if err != nil {
 		return nil, err
 	}
-	slog.InfoContext( //nolint:sloglint // global logger; slog.SetDefault called before this
-		ctx,
-		"Opened database connection",
-		"opened_connections",
-		db.Stats().OpenConnections,
-	)
+	log.InfoContext(ctx, "Opened database connection", "opened_connections", db.Stats().OpenConnections)
 	return &Storage{
 		dbConn: bob.NewDB(db),
+		logger: log,
 	}, nil
 }
 

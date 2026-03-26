@@ -5,6 +5,8 @@ package store_test
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"testing"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -35,7 +37,7 @@ func (ts *StoreTestSuite) SetupTest() {
 	ctx := context.Background()
 	ts.container, err = test.SetupDB(ctx)
 	require.NoError(ts.T(), err)
-	ts.s, err = postgres.NewStorage(ctx)
+	ts.s, err = postgres.NewStorage(ctx, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	require.NoError(ts.T(), err)
 }
 

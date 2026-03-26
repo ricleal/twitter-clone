@@ -2,6 +2,8 @@ package v1_test
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,7 +37,7 @@ func (ts *APITestSuite) SetupTest() {
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
 	// set up our API
-	twitterAPI := api.New(su, st)
+	twitterAPI := api.New(slog.New(slog.NewTextHandler(io.Discard, nil)), su, st)
 	mux := http.NewServeMux()
 	openapi.HandlerFromMux(twitterAPI, mux)
 	ts.server = httptest.NewServer(mux)
