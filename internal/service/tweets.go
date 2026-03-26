@@ -10,10 +10,12 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
+const maxTweetLength = 280 // Twitter's character limit
+
 // validateTweet validates a tweet content is not too long.
 func validateTweet(content string) error {
-	if len(content) > 280 {
-		return fmt.Errorf("tweet content is too long")
+	if len(content) > maxTweetLength {
+		return errors.New("tweet content is too long")
 	}
 	return nil
 }
@@ -31,7 +33,7 @@ type tweetService struct {
 }
 
 // NewTweetService returns a new TweetService.
-func NewTweetService(s store.Store) *tweetService {
+func NewTweetService(s store.Store) TweetService {
 	return &tweetService{s}
 }
 
@@ -97,13 +99,13 @@ func (s *tweetService) FindByID(ctx context.Context, id string) (*entities.Tweet
 	t, err := repo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // caller checks nil pointer for not-found
 		}
 		return nil, fmt.Errorf("failed to find tweet by id %s: %w", id, err)
 	}
 
 	if t == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // caller checks nil pointer for not-found
 	}
 
 	return &entities.Tweet{

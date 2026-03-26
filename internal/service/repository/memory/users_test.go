@@ -1,7 +1,6 @@
 package memory_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -29,7 +28,7 @@ func TestUserHandlerCreate(t *testing.T) {
 		Email:    "john.doe@example.com",
 	}
 
-	err := userHandler.Create(context.Background(), user)
+	err := userHandler.Create(t.Context(), user)
 	if err != nil {
 		t.Errorf("Error creating user: %v", err)
 	}
@@ -40,7 +39,7 @@ func TestUserHandlerCreate(t *testing.T) {
 	}
 
 	// Verify the user is stored in the handler
-	users, err := userHandler.FindAll(context.Background())
+	users, err := userHandler.FindAll(t.Context())
 	if err != nil {
 		t.Errorf("Error retrieving users: %v", err)
 	}
@@ -68,18 +67,18 @@ func TestUserHandlerFindAll(t *testing.T) {
 		Email:    "jane.doe@example.com",
 	}
 
-	err := userHandler.Create(context.Background(), user1)
+	err := userHandler.Create(t.Context(), user1)
 	if err != nil {
 		t.Errorf("Error creating user: %v", err)
 	}
 
-	err = userHandler.Create(context.Background(), user2)
+	err = userHandler.Create(t.Context(), user2)
 	if err != nil {
 		t.Errorf("Error creating user: %v", err)
 	}
 
 	// Retrieve all users
-	users, err := userHandler.FindAll(context.Background())
+	users, err := userHandler.FindAll(t.Context())
 	if err != nil {
 		t.Errorf("Error retrieving users: %v", err)
 	}
@@ -111,13 +110,13 @@ func TestUserHandlerFindByID(t *testing.T) {
 		Email:    "john.doe@example.com",
 	}
 
-	err := userHandler.Create(context.Background(), user)
+	err := userHandler.Create(t.Context(), user)
 	if err != nil {
 		t.Errorf("Error creating user: %v", err)
 	}
 
 	// Retrieve the user by ID
-	foundUser, err := userHandler.FindByID(context.Background(), user.ID.String())
+	foundUser, err := userHandler.FindByID(t.Context(), user.ID.String())
 	if err != nil {
 		t.Errorf("Error retrieving user: %v", err)
 	}
@@ -132,7 +131,7 @@ func TestUserHandlerFindByIDNotFound(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Retrieve a non-existent user by ID
-	_, err := userHandler.FindByID(context.Background(), "non-existent-id")
+	_, err := userHandler.FindByID(t.Context(), "non-existent-id")
 	if !errors.Is(err, repository.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}
@@ -147,13 +146,13 @@ func TestUserHandlerFindByUsername(t *testing.T) {
 		Email:    "john.doe@example.com",
 	}
 
-	err := userHandler.Create(context.Background(), user)
+	err := userHandler.Create(t.Context(), user)
 	if err != nil {
 		t.Errorf("Error creating user: %v", err)
 	}
 
 	// Retrieve the user by username
-	foundUser, err := userHandler.FindByUsername(context.Background(), user.Username)
+	foundUser, err := userHandler.FindByUsername(t.Context(), user.Username)
 	if err != nil {
 		t.Errorf("Error retrieving user: %v", err)
 	}
@@ -168,7 +167,7 @@ func TestUserHandlerFindByUsernameNotFound(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Retrieve a non-existent user by username
-	_, err := userHandler.FindByUsername(context.Background(), "non-existent-username")
+	_, err := userHandler.FindByUsername(t.Context(), "non-existent-username")
 	if !errors.Is(err, repository.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}
@@ -183,13 +182,13 @@ func TestUserHandlerFindByEmail(t *testing.T) {
 		Email:    "john.doe@example.com",
 	}
 
-	err := userHandler.Create(context.Background(), user)
+	err := userHandler.Create(t.Context(), user)
 	if err != nil {
 		t.Errorf("Error creating user: %v", err)
 	}
 
 	// Retrieve the user by email
-	foundUser, err := userHandler.FindByEmail(context.Background(), user.Email)
+	foundUser, err := userHandler.FindByEmail(t.Context(), user.Email)
 	if err != nil {
 		t.Errorf("Error retrieving user: %v", err)
 	}
@@ -204,7 +203,7 @@ func TestUserHandlerFindByEmailNotFound(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Retrieve a non-existent user by email
-	_, err := userHandler.FindByEmail(context.Background(), "non-existent-email@example.com")
+	_, err := userHandler.FindByEmail(t.Context(), "non-existent-email@example.com")
 	if !errors.Is(err, repository.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}

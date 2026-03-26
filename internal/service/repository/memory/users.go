@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	memdb "github.com/hashicorp/go-memdb"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 )
+
+const errUnexpectedUserRecord = "unexpected record type in users table"
 
 // UserHandler is a memory implementation of the repository.UserRepository interface.
 type UserHandler struct {
@@ -31,7 +34,7 @@ func (s *UserHandler) Create(_ context.Context, u *repository.User) error {
 		Email:    u.Email,
 		Name:     u.Name,
 	}
-	if err := txn.Insert("users", record); err != nil {
+	if err := txn.Insert(tableUsers, record); err != nil {
 		txn.Abort()
 		return fmt.Errorf("failed to insert user: %w", err)
 	}
@@ -42,13 +45,16 @@ func (s *UserHandler) Create(_ context.Context, u *repository.User) error {
 // FindAll returns all users.
 func (s *UserHandler) FindAll(_ context.Context) ([]repository.User, error) {
 	txn := s.db.Txn(false)
-	it, err := txn.Get("users", "id")
+	it, err := txn.Get(tableUsers, "id")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
-	var users []repository.User
+	var users []repository.User //nolint:prealloc // iterator size is not known in advance
 	for obj := it.Next(); obj != nil; obj = it.Next() {
-		r := obj.(*userRecord)
+		r, ok := obj.(*userRecord)
+		if !ok {
+			continue
+		}
 		users = append(users, repository.User{
 			ID:       uuid.MustParse(r.ID),
 			Username: r.Username,
@@ -62,14 +68,17 @@ func (s *UserHandler) FindAll(_ context.Context) ([]repository.User, error) {
 // FindByID returns a user by ID.
 func (s *UserHandler) FindByID(_ context.Context, id string) (*repository.User, error) {
 	txn := s.db.Txn(false)
-	raw, err := txn.First("users", "id", id)
+	raw, err := txn.First(tableUsers, "id", id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
 	if raw == nil {
 		return nil, repository.ErrNotFound
 	}
-	r := raw.(*userRecord)
+	r, ok := raw.(*userRecord)
+	if !ok {
+		return nil, errors.New(errUnexpectedUserRecord)
+	}
 	return &repository.User{
 		ID:       uuid.MustParse(r.ID),
 		Username: r.Username,
@@ -81,14 +90,17 @@ func (s *UserHandler) FindByID(_ context.Context, id string) (*repository.User, 
 // FindByUsername returns a user by username.
 func (s *UserHandler) FindByUsername(_ context.Context, username string) (*repository.User, error) {
 	txn := s.db.Txn(false)
-	raw, err := txn.First("users", "username", username)
+	raw, err := txn.First(tableUsers, "username", username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user by username: %w", err)
 	}
 	if raw == nil {
 		return nil, repository.ErrNotFound
 	}
-	r := raw.(*userRecord)
+	r, ok := raw.(*userRecord)
+	if !ok {
+		return nil, errors.New(errUnexpectedUserRecord)
+	}
 	return &repository.User{
 		ID:       uuid.MustParse(r.ID),
 		Username: r.Username,
@@ -100,14 +112,17 @@ func (s *UserHandler) FindByUsername(_ context.Context, username string) (*repos
 // FindByEmail returns a user by email.
 func (s *UserHandler) FindByEmail(_ context.Context, email string) (*repository.User, error) {
 	txn := s.db.Txn(false)
-	raw, err := txn.First("users", "email", email)
+	raw, err := txn.First(tableUsers, "email", email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
 	if raw == nil {
 		return nil, repository.ErrNotFound
 	}
-	r := raw.(*userRecord)
+	r, ok := raw.(*userRecord)
+	if !ok {
+		return nil, errors.New(errUnexpectedUserRecord)
+	}
 	return &repository.User{
 		ID:       uuid.MustParse(r.ID),
 		Username: r.Username,

@@ -20,7 +20,7 @@ type twitterAPI struct {
 }
 
 // New returns a new twitterServer with the given services.
-func New(userService service.UserService, tweetService service.TweetService) *twitterAPI {
+func New(userService service.UserService, tweetService service.TweetService) openapi.ServerInterface {
 	return &twitterAPI{
 		tweetService: tweetService,
 		userService:  userService,
@@ -51,7 +51,7 @@ func (t *twitterAPI) GetTweets(w http.ResponseWriter, r *http.Request) {
 			UserId:  tweet.UserID,
 		})
 	}
-	json.NewEncoder(w).Encode(openapiTweets) //nolint:errcheck //ignore error
+	json.NewEncoder(w).Encode(openapiTweets) //nolint:errcheck,gosec //ignore error
 }
 
 // Create a tweet
@@ -85,7 +85,11 @@ func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 // Get tweet by ID
 // (GET /tweets/{id}).
-func (t *twitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:revive,stylecheck //methods are generated
+func (t *twitterAPI) GetTweetsId( //nolint:revive,staticcheck // generated method; interface name preserved
+	w http.ResponseWriter,
+	r *http.Request,
+	id uuid.UUID,
+) {
 	ctx := r.Context()
 
 	tweet, err := t.tweetService.FindByID(ctx, id.String())
@@ -104,7 +108,7 @@ func (t *twitterAPI) GetTweetsId(w http.ResponseWriter, r *http.Request, id uuid
 		UserId:  tweet.UserID,
 	}
 
-	json.NewEncoder(w).Encode(openapiTweet) //nolint:errcheck //ignore error
+	json.NewEncoder(w).Encode(openapiTweet) //nolint:errcheck,gosec //ignore error
 }
 
 // List all users
@@ -129,7 +133,7 @@ func (t *twitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 		openapiUsers = append(openapiUsers, &openapi.User{
 			Id:       &userID,
 			Username: user.Username,
-			Email:    openapi_types.Email(user.Email),
+			Email:    openapi_types.Email(user.Email), //nolint:staticcheck // pending oapi-codegen upgrade
 		})
 		if user.Name != "" {
 			userName := user.Name
@@ -138,7 +142,7 @@ func (t *twitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(openapiUsers) //nolint:errcheck //ignore error
+	json.NewEncoder(w).Encode(openapiUsers) //nolint:errcheck,gosec //ignore error
 }
 
 // Create a user
@@ -171,7 +175,11 @@ func (t *twitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
 
 // Get user profile by ID
 // (GET /users/{id}).
-func (t *twitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.UUID) { //nolint:revive,stylecheck //methods are generated
+func (t *twitterAPI) GetUsersId( //nolint:revive,staticcheck // generated method; interface name preserved
+	w http.ResponseWriter,
+	r *http.Request,
+	id uuid.UUID,
+) {
 	ctx := r.Context()
 
 	user, err := t.userService.FindByID(ctx, id.String())
@@ -187,11 +195,11 @@ func (t *twitterAPI) GetUsersId(w http.ResponseWriter, r *http.Request, id uuid.
 	openapiUser := openapi.User{
 		Id:       &user.ID,
 		Username: user.Username,
-		Email:    openapi_types.Email(user.Email),
+		Email:    openapi_types.Email(user.Email), //nolint:staticcheck // pending oapi-codegen upgrade
 	}
 	if user.Name != "" {
 		openapiUser.Name = &user.Name
 	}
 
-	json.NewEncoder(w).Encode(openapiUser) //nolint:errcheck //ignore error
+	json.NewEncoder(w).Encode(openapiUser) //nolint:errcheck,gosec //ignore error
 }

@@ -15,7 +15,7 @@ type memStore struct {
 }
 
 // NewMemStore creates a new memory store backed by go-memdb.
-func NewMemStore() *memStore {
+func NewMemStore() *memStore { //nolint:revive // returns unexported type; tests access TransactionError field directly
 	db, err := memory.NewDB()
 	if err != nil {
 		panic("failed to create in-memory database: " + err.Error())

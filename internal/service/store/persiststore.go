@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/stephenafamo/bob"
 
@@ -21,7 +22,7 @@ type persistentStoreTx struct {
 }
 
 // NewPersistentStore creates a new store with the given database connection.
-func NewPersistentStore(db bob.DB) *persistentStore {
+func NewPersistentStore(db bob.DB) Store {
 	return &persistentStore{db: db}
 }
 
@@ -37,9 +38,13 @@ func (s *persistentStore) Users() repository.UserRepository {
 
 // ExecTx executes fn within a database transaction.
 func (s *persistentStore) ExecTx(ctx context.Context, fn func(Store) error) error {
-	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bob.Executor) error {
+	err := s.db.RunInTx(ctx, nil, func(_ context.Context, tx bob.Executor) error {
 		return fn(&persistentStoreTx{db: tx})
 	})
+	if err != nil {
+		return fmt.Errorf("ExecTx: %w", err)
+	}
+	return nil
 }
 
 func (s *persistentStoreTx) Tweets() repository.TweetRepository {

@@ -29,14 +29,14 @@ func NewTweetStorage(dbConn bob.Executor) *TweetStorage {
 }
 
 // Create creates a new tweet.
-func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) (err error) {
+func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) error {
 	setter := &models.TweetSetter{
 		ID:      omit.From(uuid.NewString()),
 		Content: omit.From(t.Content),
 		UserID:  omit.From(t.UserID.String()),
 	}
 
-	_, err = models.Tweets.Insert(setter).One(ctx, s.dbConn)
+	_, err := models.Tweets.Insert(setter).One(ctx, s.dbConn)
 	if err != nil {
 		return fmt.Errorf("failed to insert tweet: %w", err)
 	}

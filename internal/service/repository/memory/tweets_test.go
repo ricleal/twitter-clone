@@ -1,7 +1,6 @@
 package memory_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -28,7 +27,7 @@ func TestTweetHandlerCreate(t *testing.T) {
 		Content: "Hello, world!",
 	}
 
-	err := tweetHandler.Create(context.Background(), tweet)
+	err := tweetHandler.Create(t.Context(), tweet)
 	if err != nil {
 		t.Errorf("Error creating tweet: %v", err)
 	}
@@ -39,7 +38,7 @@ func TestTweetHandlerCreate(t *testing.T) {
 	}
 
 	// Verify the tweet is stored in the handler
-	tweets, err := tweetHandler.FindAll(context.Background())
+	tweets, err := tweetHandler.FindAll(t.Context())
 	if err != nil {
 		t.Errorf("Error retrieving tweets: %v", err)
 	}
@@ -65,18 +64,18 @@ func TestTweetHandlerFindAll(t *testing.T) {
 		Content: "Tweet 2",
 	}
 
-	err := tweetHandler.Create(context.Background(), tweet1)
+	err := tweetHandler.Create(t.Context(), tweet1)
 	if err != nil {
 		t.Errorf("Error creating tweet: %v", err)
 	}
 
-	err = tweetHandler.Create(context.Background(), tweet2)
+	err = tweetHandler.Create(t.Context(), tweet2)
 	if err != nil {
 		t.Errorf("Error creating tweet: %v", err)
 	}
 
 	// Retrieve all tweets
-	tweets, err := tweetHandler.FindAll(context.Background())
+	tweets, err := tweetHandler.FindAll(t.Context())
 	if err != nil {
 		t.Errorf("Error retrieving tweets: %v", err)
 	}
@@ -107,13 +106,13 @@ func TestTweetHandlerFindByID(t *testing.T) {
 		Content: "Hello, world!",
 	}
 
-	err := tweetHandler.Create(context.Background(), tweet)
+	err := tweetHandler.Create(t.Context(), tweet)
 	if err != nil {
 		t.Errorf("Error creating tweet: %v", err)
 	}
 
 	// Retrieve the tweet by ID
-	foundTweet, err := tweetHandler.FindByID(context.Background(), tweet.ID.String())
+	foundTweet, err := tweetHandler.FindByID(t.Context(), tweet.ID.String())
 	if err != nil {
 		t.Errorf("Error retrieving tweet: %v", err)
 	}
@@ -128,7 +127,7 @@ func TestTweetHandlerFindByIDNotFound(t *testing.T) {
 	tweetHandler := newTestTweetHandler(t)
 
 	// Retrieve a non-existent tweet by ID
-	_, err := tweetHandler.FindByID(context.Background(), "non-existent-id")
+	_, err := tweetHandler.FindByID(t.Context(), "non-existent-id")
 	if !errors.Is(err, repository.ErrNotFound) {
 		t.Errorf("Expected ErrNotFound, got %v", err)
 	}

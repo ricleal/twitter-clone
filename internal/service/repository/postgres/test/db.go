@@ -6,17 +6,23 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"time"
 
 	"github.com/docker/go-connections/nat"
 	"github.com/golang-migrate/migrate/v4"
 	pgMigrate "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/source/file" // file URL source driver registration
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+)
+
+const (
+	dbStartupTimeout      = 5 * time.Second // time to wait for the postgres container to be ready
+	pgReadyLogOccurrences = 2               // number of times the ready log must appear
 )
 
 func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
@@ -25,14 +31,14 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 	password := os.Getenv("DB_PASSWORD")
 	port := os.Getenv("DB_PORT")
 
-	container, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("docker.io/postgres:15.3"),
+	container, err := postgres.Run(ctx,
+		"docker.io/postgres:15.3",
 		postgres.WithDatabase(dbname),
 		postgres.WithUsername(user),
 		postgres.WithPassword(password),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).WithStartupTimeout(5*time.Second),
+				WithOccurrence(pgReadyLogOccurrences).WithStartupTimeout(dbStartupTimeout),
 		),
 	)
 	if err != nil {
@@ -49,9 +55,22 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 		return nil, fmt.Errorf("failed to get host IP: %w", err)
 	}
 
-	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, hostIP, mappedPort.Port(), dbname)
-	os.Setenv("DB_URL", uri)
-	slog.Debug("postgres test container running", "uri", uri)
+	uri := fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
+		user,
+		password,
+		net.JoinHostPort(hostIP, mappedPort.Port()),
+		dbname,
+	)
+	os.Setenv( //nolint:gosec // G104: test helper; env var mutation is intentional
+		"DB_URL",
+		uri,
+	)
+	slog.Debug( //nolint:gosec,sloglint // G706: test helper; global logger acceptable
+		"postgres test container running",
+		"uri",
+		uri,
+	)
 	return container, nil
 }
 
@@ -59,7 +78,7 @@ func setupMigrations(_ context.Context) error {
 	dbURL := os.Getenv("DB_URL")
 
 	if dbURL == "" {
-		return fmt.Errorf("DB_URL not set")
+		return errors.New("DB_URL not set")
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -87,7 +106,7 @@ func setupMigrations(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to close database: %w", err)
 	}
-	slog.Info("migrations ran successfully")
+	slog.Info("migrations ran successfully") //nolint:sloglint // global logger acceptable in test helper
 	return nil
 }
 

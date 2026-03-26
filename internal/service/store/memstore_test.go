@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -35,7 +34,7 @@ func TestMemStoreExecTx_Success(t *testing.T) {
 	memStore := store.NewMemStore()
 
 	// Test a successful transaction execution
-	err := memStore.ExecTx(context.Background(), func(s store.Store) error {
+	err := memStore.ExecTx(t.Context(), func(_ store.Store) error {
 		// Noop transaction
 		return nil
 	})
@@ -49,7 +48,7 @@ func TestMemStoreExecTx_Error(t *testing.T) {
 	memStore.TransactionError = true
 
 	// Test an error during transaction execution
-	err := memStore.ExecTx(context.Background(), func(s store.Store) error {
+	err := memStore.ExecTx(t.Context(), func(_ store.Store) error {
 		// Noop transaction
 		return nil
 	})

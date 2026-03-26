@@ -16,9 +16,9 @@ const (
 	contentTypeValue = "application/vnd.api+json"
 )
 
-func parseResponse(req *http.Request, response interface{}) (int, error) {
+func parseResponse(req *http.Request, response any) (int, error) {
 	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := client.Do(req) //nolint:gosec // G107: test helper; URLs are controlled by tests
 	if err != nil {
 		return 0, fmt.Errorf("failed to execute request: %w", err)
 	}
@@ -33,8 +33,8 @@ func parseResponse(req *http.Request, response interface{}) (int, error) {
 			return res.StatusCode, nil
 		}
 	}
-	if err := json.Unmarshal(body, &response); err != nil {
-		return 0, fmt.Errorf("failed to unmarshal response body: %w", err)
+	if unmarshalErr := json.Unmarshal(body, &response); unmarshalErr != nil {
+		return 0, fmt.Errorf("failed to unmarshal response body: %w", unmarshalErr)
 	}
 	return res.StatusCode, nil
 }
@@ -42,7 +42,7 @@ func parseResponse(req *http.Request, response interface{}) (int, error) {
 // Get executes an HTTP GET request to the given URL. The response body is
 // assumed to contain JSON and this is unmarshaled into the provided response
 // object. The HTTP response status code is also returned.
-func Get(ctx context.Context, theURL string, response interface{}) (statusCode int, err error) {
+func Get(ctx context.Context, theURL string, response any) (int, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, theURL, http.NoBody)
 	if err != nil {
 		return 0, fmt.Errorf("failed to GET request: %w", err)
@@ -56,8 +56,8 @@ func GetWithHeaders(
 	ctx context.Context,
 	theURL string,
 	headers map[string]string,
-	response interface{},
-) (statusCode int, err error) {
+	response any,
+) (int, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, theURL, http.NoBody)
 	if err != nil {
 		return 0, fmt.Errorf("failed to GET request: %w", err)
@@ -72,7 +72,7 @@ func GetWithHeaders(
 // The content type is set to application/vnd.api+json. The response body is
 // assumed to contain JSON and this is unmarshaled into the provided response
 // object. The HTTP response status code is also returned.
-func Post(ctx context.Context, theURL, body string, response interface{}) (statusCode int, err error) {
+func Post(ctx context.Context, theURL, body string, response any) (int, error) {
 	req, err := http.NewRequestWithContext(
 		ctx, http.MethodPost, theURL, strings.NewReader(body))
 	if err != nil {
@@ -89,8 +89,8 @@ func PostWithHeaders(
 	theURL string,
 	headers map[string]string,
 	body string,
-	response interface{},
-) (statusCode int, err error) {
+	response any,
+) (int, error) {
 	req, err := http.NewRequestWithContext(
 		ctx, http.MethodPost, theURL, strings.NewReader(body))
 	if err != nil {
@@ -104,7 +104,12 @@ func PostWithHeaders(
 }
 
 // Patch executes an HTTP PATCH request to the given URL with given body.
-func Patch(ctx context.Context, theURL, body string, headers map[string]string, response interface{}) (statusCode int, err error) {
+func Patch(
+	ctx context.Context,
+	theURL, body string,
+	headers map[string]string,
+	response any,
+) (int, error) {
 	req, err := http.NewRequestWithContext(
 		ctx, http.MethodPatch, theURL, strings.NewReader(body),
 	)
@@ -119,7 +124,7 @@ func Patch(ctx context.Context, theURL, body string, headers map[string]string, 
 }
 
 // Delete executes an HTTP DELETE request to the given URL.
-func Delete(ctx context.Context, theURL string, response interface{}) (statusCode int, err error) {
+func Delete(ctx context.Context, theURL string, response any) (int, error) {
 	req, err := http.NewRequestWithContext(
 		ctx, http.MethodDelete, theURL, http.NoBody)
 	if err != nil {
@@ -129,7 +134,12 @@ func Delete(ctx context.Context, theURL string, response interface{}) (statusCod
 }
 
 // DeleteWithHeaders is the same as Delete but it also provides the given HTTP headers.
-func DeleteWithHeaders(ctx context.Context, theURL string, headers map[string]string, response interface{}) (statusCode int, err error) {
+func DeleteWithHeaders(
+	ctx context.Context,
+	theURL string,
+	headers map[string]string,
+	response any,
+) (int, error) {
 	req, err := http.NewRequestWithContext(
 		ctx, http.MethodDelete, theURL, http.NoBody)
 	for k, v := range headers {

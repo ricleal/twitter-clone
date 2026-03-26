@@ -33,7 +33,7 @@ type userService struct {
 }
 
 // NewUserService creates a new UserService.
-func NewUserService(s store.Store) *userService {
+func NewUserService(s store.Store) UserService {
 	return &userService{s}
 }
 
@@ -75,7 +75,7 @@ func (s *userService) FindByID(ctx context.Context, id string) (*entities.User, 
 	u, err := s.store.Users().FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // caller checks nil pointer for not-found
 		}
 		return nil, fmt.Errorf("could not find user: %w", err)
 	}

@@ -21,44 +21,49 @@ type tweetRecord struct {
 	UserID  string
 }
 
-var dbSchema = &memdb.DBSchema{
-	Tables: map[string]*memdb.TableSchema{
-		"users": {
-			Name: "users",
-			Indexes: map[string]*memdb.IndexSchema{
-				"id": {
-					Name:    "id",
-					Unique:  true,
-					Indexer: &memdb.StringFieldIndex{Field: "ID"},
-				},
-				"username": {
-					Name:    "username",
-					Unique:  true,
-					Indexer: &memdb.StringFieldIndex{Field: "Username"},
-				},
-				"email": {
-					Name:    "email",
-					Unique:  true,
-					Indexer: &memdb.StringFieldIndex{Field: "Email"},
-				},
-			},
-		},
-		"tweets": {
-			Name: "tweets",
-			Indexes: map[string]*memdb.IndexSchema{
-				"id": {
-					Name:    "id",
-					Unique:  true,
-					Indexer: &memdb.StringFieldIndex{Field: "ID"},
-				},
-			},
-		},
-	},
-}
+// Table names used as keys throughout the memory store.
+const (
+	tableUsers  = "users"
+	tableTweets = "tweets"
+)
 
 // NewDB creates a new in-memory database with the twitter-clone schema.
 func NewDB() (*memdb.MemDB, error) {
-	db, err := memdb.NewMemDB(dbSchema)
+	schema := &memdb.DBSchema{
+		Tables: map[string]*memdb.TableSchema{
+			tableUsers: {
+				Name: tableUsers,
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ID"},
+					},
+					"username": {
+						Name:    "username",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Username"},
+					},
+					"email": {
+						Name:    "email",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Email"},
+					},
+				},
+			},
+			tableTweets: {
+				Name: tableTweets,
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ID"},
+					},
+				},
+			},
+		},
+	}
+	db, err := memdb.NewMemDB(schema)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-memory database: %w", err)
 	}

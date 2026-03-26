@@ -10,10 +10,12 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
+const levelTraceOffset slog.Level = 4 // distance from Debug/Error to trace/fatal custom levels
+
 func parseLevel(logLevel string) (slog.Level, error) {
 	switch strings.ToLower(logLevel) {
 	case "trace":
-		return slog.LevelDebug - 4, nil
+		return slog.LevelDebug - levelTraceOffset, nil
 	case "debug":
 		return slog.LevelDebug, nil
 	case "info", "":
@@ -23,7 +25,7 @@ func parseLevel(logLevel string) (slog.Level, error) {
 	case "error":
 		return slog.LevelError, nil
 	case "fatal", "panic":
-		return slog.LevelError + 4, nil
+		return slog.LevelError + levelTraceOffset, nil
 	default:
 		return 0, fmt.Errorf("unknown log level %q", logLevel)
 	}
@@ -51,7 +53,11 @@ func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
 func InitLogFromEnv(ctx context.Context) (context.Context, error) {
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel == "" {
-		slog.Warn("No environment variable LOG_LEVEL, setting it to info", "level", logLevel)
+		slog.Warn( //nolint:gosec,sloglint // G706: logLevel is from env; logger not yet configured
+			"No environment variable LOG_LEVEL, setting it to info",
+			"level",
+			logLevel,
+		)
 		logLevel = "info"
 	}
 	return InitLog(ctx, logLevel)

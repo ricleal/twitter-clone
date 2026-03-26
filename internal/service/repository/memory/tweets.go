@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	memdb "github.com/hashicorp/go-memdb"
@@ -30,7 +31,7 @@ func (s *TweetHandler) Create(_ context.Context, t *repository.Tweet) error {
 		Content: t.Content,
 		UserID:  t.UserID.String(),
 	}
-	if err := txn.Insert("tweets", record); err != nil {
+	if err := txn.Insert(tableTweets, record); err != nil {
 		txn.Abort()
 		return fmt.Errorf("failed to insert tweet: %w", err)
 	}
@@ -41,13 +42,16 @@ func (s *TweetHandler) Create(_ context.Context, t *repository.Tweet) error {
 // FindAll returns all tweets.
 func (s *TweetHandler) FindAll(_ context.Context) ([]repository.Tweet, error) {
 	txn := s.db.Txn(false)
-	it, err := txn.Get("tweets", "id")
+	it, err := txn.Get(tableTweets, "id")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tweets: %w", err)
 	}
-	var tweets []repository.Tweet
+	var tweets []repository.Tweet //nolint:prealloc // iterator size is not known in advance
 	for obj := it.Next(); obj != nil; obj = it.Next() {
-		r := obj.(*tweetRecord)
+		r, ok := obj.(*tweetRecord)
+		if !ok {
+			continue
+		}
 		tweets = append(tweets, repository.Tweet{
 			ID:      uuid.MustParse(r.ID),
 			Content: r.Content,
@@ -60,14 +64,17 @@ func (s *TweetHandler) FindAll(_ context.Context) ([]repository.Tweet, error) {
 // FindByID returns a tweet by ID.
 func (s *TweetHandler) FindByID(_ context.Context, id string) (*repository.Tweet, error) {
 	txn := s.db.Txn(false)
-	raw, err := txn.First("tweets", "id", id)
+	raw, err := txn.First(tableTweets, "id", id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find tweet: %w", err)
 	}
 	if raw == nil {
 		return nil, repository.ErrNotFound
 	}
-	r := raw.(*tweetRecord)
+	r, ok := raw.(*tweetRecord)
+	if !ok {
+		return nil, errors.New("unexpected record type in tweets table")
+	}
 	return &repository.Tweet{
 		ID:      uuid.MustParse(r.ID),
 		Content: r.Content,

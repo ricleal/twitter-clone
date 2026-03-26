@@ -10,6 +10,13 @@ type ExecTxError struct {
 	message string
 }
 
+// NewExecTxError returns a ExecTxError with the given message.
+func NewExecTxError(message string) *ExecTxError {
+	return &ExecTxError{
+		message: "ExecTxError: " + message,
+	}
+}
+
 // Error returns the error message.
 func (r *ExecTxError) Error() string {
 	return r.message
@@ -18,11 +25,4 @@ func (r *ExecTxError) Error() string {
 // Unwrap returns the wrapped error.
 func (r *ExecTxError) Unwrap() error {
 	return ErrExecTxError
-}
-
-// NewExecTxError returns a ExecTxError with the given message.
-func NewExecTxError(message string) *ExecTxError {
-	return &ExecTxError{
-		message: "ExecTxError: " + message,
-	}
 }

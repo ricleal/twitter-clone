@@ -24,6 +24,13 @@ import (
 	"github.com/ricleal/twitter-clone/internal/service/store"
 )
 
+const errLogKey = "error" // slog attribute key for error values
+
+const (
+	serverReadTimeout = 10 * time.Second // HTTP server read timeout
+	shutdownTimeout   = 10 * time.Second // graceful shutdown deadline
+)
+
 func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService) error {
 	twitterAPI := apiv1.New(su, st)
 
@@ -37,9 +44,9 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 	swagger.Servers = nil
 
 	r := chi.NewRouter()
-	r.Use(oapiMiddleware.OapiRequestValidator(swagger))
-	r.Use(middleware.AllowContentType("application/json"))          //nolint:goconst // ignore
-	r.Use(middleware.SetHeader("Content-Type", "application/json")) // nolint:goconst // ignore
+	r.Use(oapiMiddleware.OapiRequestValidator(swagger)) //nolint:staticcheck // pending oapi-codegen upgrade
+	r.Use(middleware.AllowContentType("application/json"))
+	r.Use(middleware.SetHeader("Content-Type", "application/json"))
 
 	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterAPI, r)))
 
@@ -47,10 +54,10 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 	if err != nil {
 		return fmt.Errorf("error marshaling swagger: %w", err)
 	}
-	root.Get("/api/v1/api.json", func(w http.ResponseWriter, r *http.Request) {
+	root.Get("/api/v1/api.json", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write(apiJSON)
-		if err != nil {
+		_, writeErr := w.Write(apiJSON)
+		if writeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -59,13 +66,25 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 }
 
 func printRoutes(ctx context.Context, r chi.Router) {
-	walkFunc := func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		slog.DebugContext(ctx, "registered route", "method", method, "route", route)
+	walkFunc := func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+		slog.DebugContext( //nolint:sloglint // global logger configured via slog.SetDefault
+			ctx,
+			"registered route",
+			"method",
+			method,
+			"route",
+			route,
+		)
 		return nil
 	}
 
 	if err := chi.Walk(r, walkFunc); err != nil {
-		slog.ErrorContext(ctx, "error walking routes", "error", err)
+		slog.ErrorContext( //nolint:sloglint // global logger configured via slog.SetDefault
+			ctx,
+			"error walking routes",
+			errLogKey,
+			err,
+		)
 	}
 }
 
@@ -79,13 +98,25 @@ func main() {
 	port := flag.Int("port", 8888, "Port for the HTTP server")
 	flag.Parse()
 
+	if runErr := run(ctx, *port); runErr != nil {
+		slog.ErrorContext( //nolint:sloglint // global logger configured via slog.SetDefault
+			ctx,
+			"fatal error",
+			errLogKey,
+			runErr,
+		)
+		os.Exit(1)
+	}
+}
+
+func run(ctx context.Context, port int) error {
 	// Set up our data store
 	dbServer, err := postgres.NewStorage(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "error connecting to database", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("connecting to database: %w", err)
 	}
 	defer dbServer.Close()
+
 	s := store.NewPersistentStore(dbServer.DB())
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
@@ -97,9 +128,8 @@ func main() {
 	root.Use(middleware.StripSlashes)
 
 	// Set up API v1
-	if err := apiV1Router(root, su, st); err != nil {
-		slog.ErrorContext(ctx, "error setting up openapi router", "error", err)
-		os.Exit(1)
+	if routerErr := apiV1Router(root, su, st); routerErr != nil {
+		return fmt.Errorf("setting up api router: %w", routerErr)
 	}
 
 	// Print out the routes if we're in debug mode
@@ -107,11 +137,7 @@ func main() {
 		printRoutes(ctx, root)
 	}
 
-	// Start the server
-	if err := serve(ctx, root, *port); err != nil {
-		slog.ErrorContext(ctx, "error serving http", "error", err)
-		os.Exit(1)
-	}
+	return serve(ctx, root, port)
 }
 
 func serve(ctx context.Context, handler http.Handler, port int) error {
@@ -119,7 +145,7 @@ func serve(ctx context.Context, handler http.Handler, port int) error {
 		Handler:     handler,
 		Addr:        fmt.Sprintf(":%d", port),
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
-		ReadTimeout: 10 * time.Second,
+		ReadTimeout: serverReadTimeout,
 	}
 
 	errChan := make(chan error)
@@ -143,12 +169,15 @@ func serve(ctx context.Context, handler http.Handler, port int) error {
 	case <-ctx.Done():
 	}
 
-	slog.InfoContext(ctx, "shutting down...")
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	slog.InfoContext(ctx, "shutting down...") //nolint:sloglint // global logger configured via slog.SetDefault
+	ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown gracefully: %w", err)
 	}
-	slog.InfoContext(ctx, "Server shutdown gracefully")
+	slog.InfoContext( //nolint:sloglint // global logger configured via slog.SetDefault
+		ctx,
+		"Server shutdown gracefully",
+	)
 	return nil
 }
