@@ -1,6 +1,6 @@
 module github.com/ricleal/twitter-clone
 
-go 1.20
+go 1.25
 
 require (
 	github.com/deepmap/oapi-codegen v1.13.0
@@ -12,7 +12,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-isatty v0.0.19
-	github.com/rs/zerolog v1.29.1
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.21.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.21.0

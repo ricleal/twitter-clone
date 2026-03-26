@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgMigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/rs/zerolog/log"
+
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -50,7 +51,7 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, hostIP, mappedPort.Port(), dbname)
 	os.Setenv("DB_URL", uri)
-	log.Debug().Str("uri", uri).Msg("postgres test container running")
+	slog.Debug("postgres test container running", "uri", uri)
 	return container, nil
 }
 
@@ -86,7 +87,7 @@ func setupMigrations(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to close database: %w", err)
 	}
-	log.Info().Msg("migrations ran successfully")
+	slog.Info("migrations ran successfully")
 	return nil
 }
 

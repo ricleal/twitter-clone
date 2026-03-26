@@ -140,7 +140,7 @@ docker-build:
 
 .PHONY: docker-up
 docker-up: docker-build ## Run docker container
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml up
+	$(ENV_VARS) docker-compose -f docker-compose.yaml up
 
 .PHONY: docker-down
 docker-down: ## Stop docker container

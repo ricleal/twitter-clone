@@ -1,4 +1,8 @@
 version: "3.7"
+networks:
+  twitter-clone-db:
+    driver: bridge
+
 services:
   postgres-dev:
     image: postgres:15.3
@@ -7,7 +11,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - "127.0.0.1:${DB_PORT}:5432"
+    networks:
+      - twitter-clone-db
     command: >
       -c ssl=on
       -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem

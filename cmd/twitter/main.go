@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -14,8 +16,6 @@ import (
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
 	apiv1 "github.com/ricleal/twitter-clone/internal/api/v1"
 	openapiv1 "github.com/ricleal/twitter-clone/internal/api/v1/openapi"
@@ -60,12 +60,12 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 
 func printRoutes(ctx context.Context, r chi.Router) {
 	walkFunc := func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		log.Ctx(ctx).Debug().Str("method", method).Str("route", route).Msg("registered route")
+		slog.DebugContext(ctx, "registered route", "method", method, "route", route)
 		return nil
 	}
 
 	if err := chi.Walk(r, walkFunc); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("error walking routes")
+		slog.ErrorContext(ctx, "error walking routes", "error", err)
 	}
 }
 
@@ -82,7 +82,8 @@ func main() {
 	// Set up our data store
 	dbServer, err := postgres.NewStorage(ctx)
 	if err != nil {
-		log.Ctx(ctx).Fatal().Err(err).Msg("error connecting to database")
+		slog.ErrorContext(ctx, "error connecting to database", "error", err)
+		os.Exit(1)
 	}
 	defer dbServer.Close()
 	s := store.NewPersistentStore(dbServer.DB())
@@ -97,17 +98,19 @@ func main() {
 
 	// Set up API v1
 	if err := apiV1Router(root, su, st); err != nil {
-		log.Ctx(ctx).Fatal().Err(err).Msg("error setting up openapi router")
+		slog.ErrorContext(ctx, "error setting up openapi router", "error", err)
+		os.Exit(1)
 	}
 
 	// Print out the routes if we're in debug mode
-	if log.Ctx(ctx).GetLevel() <= zerolog.DebugLevel {
+	if slog.Default().Enabled(ctx, slog.LevelDebug) {
 		printRoutes(ctx, root)
 	}
 
 	// Start the server
 	if err := serve(ctx, root, *port); err != nil {
-		log.Ctx(ctx).Fatal().Err(err).Msg("error serving http")
+		slog.ErrorContext(ctx, "error serving http", "error", err)
+		os.Exit(1)
 	}
 }
 
@@ -121,7 +124,7 @@ func serve(ctx context.Context, handler http.Handler, port int) error {
 
 	errChan := make(chan error)
 	go func() {
-		log.Ctx(ctx).Info().Int("port", port).Msg("serving http on port")
+		slog.InfoContext(ctx, "serving http on port", "port", port)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			errChan <- fmt.Errorf("failed to start server: %w", err)
 		}
@@ -140,12 +143,12 @@ func serve(ctx context.Context, handler http.Handler, port int) error {
 	case <-ctx.Done():
 	}
 
-	log.Ctx(ctx).Info().Msg("shutting down...")
+	slog.InfoContext(ctx, "shutting down...")
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown gracefully: %w", err)
 	}
-	log.Ctx(ctx).Info().Msg("Server shutdown gracefully")
+	slog.InfoContext(ctx, "Server shutdown gracefully")
 	return nil
 }

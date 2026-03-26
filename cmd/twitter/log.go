@@ -3,26 +3,46 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-// InitLog initializes the logger in the context with the given log level.
+func parseLevel(logLevel string) (slog.Level, error) {
+	switch strings.ToLower(logLevel) {
+	case "trace":
+		return slog.LevelDebug - 4, nil
+	case "debug":
+		return slog.LevelDebug, nil
+	case "info", "":
+		return slog.LevelInfo, nil
+	case "warn", "warning":
+		return slog.LevelWarn, nil
+	case "error":
+		return slog.LevelError, nil
+	case "fatal", "panic":
+		return slog.LevelError + 4, nil
+	default:
+		return 0, fmt.Errorf("unknown log level %q", logLevel)
+	}
+}
+
+// InitLog initializes the logger with the given log level and sets it as default.
 func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
-	level, err := zerolog.ParseLevel(logLevel)
+	level, err := parseLevel(logLevel)
 	if err != nil {
 		return nil, fmt.Errorf("invalid log level: %s", logLevel)
 	}
-	logger := zerolog.New(os.Stdout)
-	logger = logger.With().Timestamp().Logger().Level(level)
+	opts := &slog.HandlerOptions{Level: level}
+	var handler slog.Handler
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		logger = logger.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	} else {
+		handler = slog.NewJSONHandler(os.Stdout, opts)
 	}
-	ctx = logger.WithContext(ctx)
-	log.Logger = logger
+	slog.SetDefault(slog.New(handler))
 	return ctx, nil
 }
 
@@ -31,7 +51,7 @@ func InitLog(ctx context.Context, logLevel string) (context.Context, error) {
 func InitLogFromEnv(ctx context.Context) (context.Context, error) {
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel == "" {
-		log.Warn().Str("level", logLevel).Msg("No environment variable LOG_LEVEL, setting it to info")
+		slog.Warn("No environment variable LOG_LEVEL, setting it to info", "level", logLevel)
 		logLevel = "info"
 	}
 	return InitLog(ctx, logLevel)

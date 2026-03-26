@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 
 	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -26,7 +25,7 @@ func open(ctx context.Context) (*sql.DB, error) {
 	}
 
 	boil.SetDB(db)
-	if log.Ctx(ctx).GetLevel() <= zerolog.TraceLevel {
+	if slog.Default().Enabled(ctx, slog.LevelDebug-4) {
 		boil.DebugMode = true
 	}
 	return db, nil
@@ -53,8 +52,7 @@ func NewStorage(ctx context.Context) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Ctx(ctx).Info().Int("opened_connections", db.Stats().OpenConnections).
-		Msg("Opened database connection")
+	slog.InfoContext(ctx, "Opened database connection", "opened_connections", db.Stats().OpenConnections)
 	return &Storage{
 		dbConn: db,
 	}, nil
