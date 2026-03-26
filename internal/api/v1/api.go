@@ -41,7 +41,7 @@ func (t *twitterAPI) GetTweets(w http.ResponseWriter, r *http.Request) {
 
 	tweets, err := t.tweetService.FindAll(ctx)
 	if err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusInternalServerError, "Error listing tweets", err)
+		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error listing tweets", err)
 		return
 	}
 	if len(tweets) == 0 {
@@ -68,7 +68,7 @@ func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 	var newTweet openapi.Tweet
 	if err := json.NewDecoder(r.Body).Decode(&newTweet); err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusBadRequest, "Invalid format for Tweet", err)
+		sendAPIError(t.logger, w, http.StatusBadRequest, "Invalid format for Tweet", err)
 		return
 	}
 
@@ -80,10 +80,10 @@ func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 	if err := t.tweetService.Create(ctx, tweet); err != nil {
 		if errors.Is(err, entities.ErrInvalidUserID) {
-			sendAPIError(ctx, t.logger, w, http.StatusNoContent, "Invalid user ID", err)
+			sendAPIError(t.logger, w, http.StatusNoContent, "Invalid user ID", err)
 			return
 		}
-		sendAPIError(ctx, t.logger, w, http.StatusInternalServerError, "Error creating tweet", err)
+		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error creating tweet", err)
 		return
 	}
 
@@ -101,11 +101,11 @@ func (t *twitterAPI) GetTweetsId( //nolint:revive,staticcheck // generated metho
 
 	tweet, err := t.tweetService.FindByID(ctx, id.String())
 	if err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusInternalServerError, "Error getting tweet", err)
+		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error getting tweet", err)
 		return
 	}
 	if tweet == nil {
-		sendAPIError(ctx, t.logger, w, http.StatusNoContent, "Tweet not found", nil)
+		sendAPIError(t.logger, w, http.StatusNoContent, "Tweet not found", nil)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (t *twitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := t.userService.FindAll(ctx)
 	if err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusInternalServerError, "Error listing users", err)
+		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error listing users", err)
 		return
 	}
 	if len(users) == 0 {
@@ -159,7 +159,7 @@ func (t *twitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
 
 	var newUser openapi.User
 	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusBadRequest, "Invalid format for User", err)
+		sendAPIError(t.logger, w, http.StatusBadRequest, "Invalid format for User", err)
 		return
 	}
 
@@ -173,7 +173,7 @@ func (t *twitterAPI) PostUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := t.userService.Create(ctx, user); err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusInternalServerError, "Error creating user", err)
+		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error creating user", err)
 		return
 	}
 
@@ -191,11 +191,11 @@ func (t *twitterAPI) GetUsersId( //nolint:revive,staticcheck // generated method
 
 	user, err := t.userService.FindByID(ctx, id.String())
 	if err != nil {
-		sendAPIError(ctx, t.logger, w, http.StatusInternalServerError, "Error getting user", err)
+		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error getting user", err)
 		return
 	}
 	if user == nil {
-		sendAPIError(ctx, t.logger, w, http.StatusNoContent, "User not found", nil)
+		sendAPIError(t.logger, w, http.StatusNoContent, "User not found", nil)
 		return
 	}
 

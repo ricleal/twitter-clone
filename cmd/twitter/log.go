@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/lmittmann/tint"
 	"github.com/mattn/go-isatty"
 )
 
@@ -31,17 +33,21 @@ func parseLevel(logLevel string) (slog.Level, error) {
 }
 
 // InitLog creates and returns a logger configured at the given log level.
+// When stdout is a TTY (local development) it uses tint for colorized output;
+// otherwise it emits JSON suitable for Kubernetes/log aggregators.
 func InitLog(logLevel string) (*slog.Logger, error) {
 	level, err := parseLevel(logLevel)
 	if err != nil {
 		return nil, fmt.Errorf("invalid log level: %s", logLevel)
 	}
-	opts := &slog.HandlerOptions{Level: level}
 	var handler slog.Handler
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		handler = slog.NewTextHandler(os.Stdout, opts)
+		handler = tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      level,
+			TimeFormat: time.TimeOnly,
+		})
 	} else {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
 	}
 	return slog.New(handler), nil
 }

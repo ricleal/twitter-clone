@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -12,14 +11,13 @@ import (
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendAPIError(
-	ctx context.Context,
 	logger *slog.Logger,
 	w http.ResponseWriter,
 	code int,
 	message string,
 	err error,
 ) {
-	logger.ErrorContext(ctx, message, "error", err)
+	logger.Error(message, "error", err)
 	apiErr := openapi.Error{
 		Code:    int32(code), //nolint:gosec // HTTP status codes safely fit in int32
 		Message: message,

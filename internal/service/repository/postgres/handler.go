@@ -41,7 +41,7 @@ func NewStorage(ctx context.Context, logger *slog.Logger) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.InfoContext(ctx, "Opened database connection", "opened_connections", db.Stats().OpenConnections)
+	log.Info("Opened database connection", "opened_connections", db.Stats().OpenConnections)
 	return &Storage{
 		dbConn: bob.NewDB(db),
 		logger: log,

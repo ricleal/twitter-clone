@@ -123,7 +123,7 @@ func serve(ctx context.Context, logger *slog.Logger, handler http.Handler, port 
 
 	errChan := make(chan error)
 	go func() {
-		logger.InfoContext(ctx, "serving http on port", "port", port)
+		logger.Info("serving http on port", "port", port)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			errChan <- fmt.Errorf("failed to start server: %w", err)
 		}
@@ -142,12 +142,12 @@ func serve(ctx context.Context, logger *slog.Logger, handler http.Handler, port 
 	case <-ctx.Done():
 	}
 
-	logger.InfoContext(ctx, "shutting down...")
+	logger.Info("shutting down...")
 	ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown gracefully: %w", err)
 	}
-	logger.InfoContext(ctx, "Server shutdown gracefully")
+	logger.Info("Server shutdown gracefully")
 	return nil
 }
