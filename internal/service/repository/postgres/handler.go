@@ -8,11 +8,11 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/stephenafamo/bob"
 )
 
 // open opens a connection to the database.
-func open(ctx context.Context) (*sql.DB, error) {
+func open(_ context.Context) (*sql.DB, error) {
 	dbURL := os.Getenv("DB_URL")
 
 	if dbURL == "" {
@@ -24,16 +24,12 @@ func open(ctx context.Context) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	boil.SetDB(db)
-	if slog.Default().Enabled(ctx, slog.LevelDebug-4) {
-		boil.DebugMode = true
-	}
 	return db, nil
 }
 
 // Storage is struct that holds the database connection.
 type Storage struct {
-	dbConn *sql.DB
+	dbConn bob.DB
 }
 
 // Close closes the database connection.
@@ -42,7 +38,7 @@ func (s *Storage) Close() error {
 }
 
 // DB returns the database connection.
-func (s *Storage) DB() *sql.DB {
+func (s *Storage) DB() bob.DB {
 	return s.dbConn
 }
 
@@ -54,6 +50,6 @@ func NewStorage(ctx context.Context) (*Storage, error) {
 	}
 	slog.InfoContext(ctx, "Opened database connection", "opened_connections", db.Stats().OpenConnections)
 	return &Storage{
-		dbConn: db,
+		dbConn: bob.NewDB(db),
 	}, nil
 }

@@ -119,15 +119,11 @@ openapi-generate: ## Generate OpenAPI client
 		openapi.yaml
 
 ## DB ORM targets
-# go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
-# go install github.com/volatiletech/sqlboiler/v4@latest
+# go install github.com/stephenafamo/bob/gen/bobgen-psql@latest
 .PHONY: db-orm-models
 db-orm-models: ## Generate Go database models
-	@command -v sqlboiler || (echo "Please install `sqlboiler`" && exit 1)
-	PSQL_USER=$(DB_USERNAME) PSQL_PASS='$(DB_PASSWORD)' PSQL_HOST=$(DB_HOSTNAME) \
-		sqlboiler --wipe --no-tests --add-soft-deletes \
-		-o internal/service/repository/postgres/orm --pkgname orm \
-		-c sqlboiler.toml psql
+	@command -v bobgen-psql || (echo "Please install bobgen-psql: go install github.com/stephenafamo/bob/gen/bobgen-psql@latest" && exit 1)
+	bobgen-psql -c bobgen.yaml
 
 .PHONY: help
 help:

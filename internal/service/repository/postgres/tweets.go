@@ -6,20 +6,23 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aarondl/opt/omit"
 	"github.com/google/uuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/ricleal/twitter-clone/internal/service/repository"
-	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
+	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/models"
 )
 
 // TweetStorage is a postgres implementation of the repository.TweetStorage interface.
 type TweetStorage struct {
-	dbConn repository.DBTx
+	dbConn bob.Executor
 }
 
 // NewTweetStorage returns a new TweetServer.
-func NewTweetStorage(dbConn repository.DBTx) *TweetStorage {
+func NewTweetStorage(dbConn bob.Executor) *TweetStorage {
 	return &TweetStorage{
 		dbConn: dbConn,
 	}
@@ -27,13 +30,13 @@ func NewTweetStorage(dbConn repository.DBTx) *TweetStorage {
 
 // Create creates a new tweet.
 func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) (err error) {
-	tweet := orm.Tweet{
-		ID:      uuid.NewString(),
-		Content: t.Content,
-		UserID:  t.UserID.String(),
+	setter := &models.TweetSetter{
+		ID:      omit.From(uuid.NewString()),
+		Content: omit.From(t.Content),
+		UserID:  omit.From(t.UserID.String()),
 	}
 
-	err = tweet.Insert(ctx, s.dbConn, boil.Infer())
+	_, err = models.Tweets.Insert(setter).One(ctx, s.dbConn)
 	if err != nil {
 		return fmt.Errorf("failed to insert tweet: %w", err)
 	}
@@ -43,7 +46,7 @@ func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) (err err
 
 // FindAll returns all tweets.
 func (s *TweetStorage) FindAll(ctx context.Context) ([]repository.Tweet, error) {
-	ormTweets, err := orm.Tweets().All(ctx, s.dbConn)
+	ormTweets, err := models.Tweets.Query().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
@@ -62,9 +65,10 @@ func (s *TweetStorage) FindAll(ctx context.Context) ([]repository.Tweet, error) 
 
 // FindByID returns a tweet by ID.
 func (s *TweetStorage) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
-	ormTweet, err := orm.FindTweet(ctx, s.dbConn, id)
+	ormTweet, err := models.Tweets.Query(
+		sm.Where(models.Tweets.Columns.ID.EQ(psql.Arg(id))),
+	).One(ctx, s.dbConn)
 	if err != nil {
-		// Check if the error is a not found error
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}

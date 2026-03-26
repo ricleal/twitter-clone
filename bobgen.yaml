@@ -1,0 +1,18 @@
+psql:
+  dsn: "postgres://postgres:Pass_1234@localhost:5433/twitter?sslmode=disable"
+  except:
+    public.schema_migrations:
+
+plugins:
+  models:
+    destination: internal/service/repository/postgres/models
+    pkgname: models
+  factory:
+    destination: internal/service/repository/postgres/models/factory
+    pkgname: factory
+  dbinfo:
+    destination: internal/service/repository/postgres/dbinfo
+    pkgname: dbinfo
+  dberrors:
+    destination: internal/service/repository/postgres/dberrors
+    pkgname: dberrors

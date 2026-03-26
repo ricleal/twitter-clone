@@ -6,21 +6,24 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aarondl/opt/omit"
+	"github.com/aarondl/opt/omitnull"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/stephenafamo/bob"
+	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/sm"
 
 	"github.com/ricleal/twitter-clone/internal/service/repository"
-	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/orm"
+	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/models"
 )
 
 // UserStorage is a postgres implementation of the repository.UserStorage interface.
 type UserStorage struct {
-	dbConn repository.DBTx
+	dbConn bob.Executor
 }
 
 // NewUserStorage returns a new UserServer.
-func NewUserStorage(dbConn repository.DBTx) *UserStorage {
+func NewUserStorage(dbConn bob.Executor) *UserStorage {
 	return &UserStorage{
 		dbConn: dbConn,
 	}
@@ -28,14 +31,14 @@ func NewUserStorage(dbConn repository.DBTx) *UserStorage {
 
 // Create creates a new user.
 func (s *UserStorage) Create(ctx context.Context, u *repository.User) error {
-	user := orm.User{
-		ID:       uuid.NewString(),
-		Username: u.Username,
-		Email:    u.Email,
-		Name:     null.StringFrom(u.Name),
+	setter := &models.UserSetter{
+		ID:       omit.From(uuid.NewString()),
+		Username: omit.From(u.Username),
+		Email:    omit.From(u.Email),
+		Name:     omitnull.From(u.Name),
 	}
 
-	err := user.Insert(ctx, s.dbConn, boil.Infer())
+	_, err := models.Users.Insert(setter).One(ctx, s.dbConn)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
 	}
@@ -45,7 +48,7 @@ func (s *UserStorage) Create(ctx context.Context, u *repository.User) error {
 
 // FindAll returns all users.
 func (s *UserStorage) FindAll(ctx context.Context) ([]repository.User, error) {
-	ormUsers, err := orm.Users().All(ctx, s.dbConn)
+	ormUsers, err := models.Users.Query().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all users: %w", err)
 	}
@@ -56,7 +59,7 @@ func (s *UserStorage) FindAll(ctx context.Context) ([]repository.User, error) {
 			ID:       uuid.MustParse(u.ID),
 			Username: u.Username,
 			Email:    u.Email,
-			Name:     u.Name.String,
+			Name:     u.Name.GetOrZero(),
 		})
 	}
 
@@ -65,9 +68,8 @@ func (s *UserStorage) FindAll(ctx context.Context) ([]repository.User, error) {
 
 // FindByID returns a user by ID.
 func (s *UserStorage) FindByID(ctx context.Context, id string) (*repository.User, error) {
-	ormUser, err := orm.FindUser(ctx, s.dbConn, id)
+	ormUser, err := models.FindUser(ctx, s.dbConn, id)
 	if err != nil {
-		// Check if the error is a not found error
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
@@ -78,15 +80,16 @@ func (s *UserStorage) FindByID(ctx context.Context, id string) (*repository.User
 		ID:       uuid.MustParse(ormUser.ID),
 		Username: ormUser.Username,
 		Email:    ormUser.Email,
-		Name:     ormUser.Name.String,
+		Name:     ormUser.Name.GetOrZero(),
 	}, nil
 }
 
 // FindByUsername returns a user by username.
 func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*repository.User, error) {
-	ormUser, err := orm.Users(orm.UserWhere.Username.EQ(username)).One(ctx, s.dbConn)
+	ormUser, err := models.Users.Query(
+		sm.Where(models.Users.Columns.Username.EQ(psql.Arg(username))),
+	).One(ctx, s.dbConn)
 	if err != nil {
-		// Check if the error is a not found error
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
@@ -97,15 +100,16 @@ func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*rep
 		ID:       uuid.MustParse(ormUser.ID),
 		Username: ormUser.Username,
 		Email:    ormUser.Email,
-		Name:     ormUser.Name.String,
+		Name:     ormUser.Name.GetOrZero(),
 	}, nil
 }
 
 // FindByEmail returns a user by email.
 func (s *UserStorage) FindByEmail(ctx context.Context, email string) (*repository.User, error) {
-	ormUser, err := orm.Users(orm.UserWhere.Email.EQ(email)).One(ctx, s.dbConn)
+	ormUser, err := models.Users.Query(
+		sm.Where(models.Users.Columns.Email.EQ(psql.Arg(email))),
+	).One(ctx, s.dbConn)
 	if err != nil {
-		// Check if the error is a not found error
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
 		}
@@ -116,6 +120,6 @@ func (s *UserStorage) FindByEmail(ctx context.Context, email string) (*repositor
 		ID:       uuid.MustParse(ormUser.ID),
 		Username: ormUser.Username,
 		Email:    ormUser.Email,
-		Name:     ormUser.Name.String,
+		Name:     ormUser.Name.GetOrZero(),
 	}, nil
 }
