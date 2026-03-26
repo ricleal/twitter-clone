@@ -98,7 +98,7 @@ db-migrate-version:  ## Print the current migration version
 #### Code generation ####
 
 ## OpenAPI targets
-# Install: go install "github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest"
+# Install: go install "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"
 .PHONY: openapi-generate
 openapi-generate: ## Generate OpenAPI client
 	mkdir -p internal/api/v1/openapi
@@ -108,9 +108,9 @@ openapi-generate: ## Generate OpenAPI client
 		-o internal/api/v1/openapi/types.go \
 		openapi.yaml
 	oapi-codegen \
-		-generate chi-server \
+		-generate std-http-server \
 		-package openapi \
-		-o internal/api/v1/openapi/chi.go \
+		-o internal/api/v1/openapi/server.go \
 		openapi.yaml
 	oapi-codegen \
 		-generate spec \

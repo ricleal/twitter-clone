@@ -13,9 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	oapiMiddleware "github.com/oapi-codegen/nethttp-middleware"
 
 	apiv1 "github.com/ricleal/twitter-clone/internal/api/v1"
 	openapiv1 "github.com/ricleal/twitter-clone/internal/api/v1/openapi"
@@ -31,7 +30,7 @@ const (
 	shutdownTimeout   = 10 * time.Second // graceful shutdown deadline
 )
 
-func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService) error {
+func apiV1Router(root *http.ServeMux, su service.UserService, st service.TweetService) error {
 	twitterAPI := apiv1.New(su, st)
 
 	swagger, err := openapiv1.GetSwagger()
@@ -43,18 +42,22 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	r := chi.NewRouter()
-	r.Use(oapiMiddleware.OapiRequestValidator(swagger)) //nolint:staticcheck // pending oapi-codegen upgrade
-	r.Use(middleware.AllowContentType("application/json"))
-	r.Use(middleware.SetHeader("Content-Type", "application/json"))
-
-	root.Mount("/api/v1", http.StripPrefix("/api/v1", openapiv1.HandlerFromMux(twitterAPI, r)))
-
 	apiJSON, err := json.Marshal(swagger)
 	if err != nil {
 		return fmt.Errorf("error marshaling swagger: %w", err)
 	}
-	root.Get("/api/v1/api.json", func(w http.ResponseWriter, _ *http.Request) {
+
+	openapiv1.HandlerWithOptions(twitterAPI, openapiv1.StdHTTPServerOptions{
+		BaseURL:    "/api/v1",
+		BaseRouter: root,
+		Middlewares: []openapiv1.MiddlewareFunc{
+			oapiMiddleware.OapiRequestValidator(swagger),
+			middleware.AllowContentType("application/json"),
+			middleware.SetHeader("Content-Type", "application/json"),
+		},
+	})
+
+	root.HandleFunc("GET /api/v1/api.json", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, writeErr := w.Write(apiJSON)
 		if writeErr != nil {
@@ -63,29 +66,6 @@ func apiV1Router(root *chi.Mux, su service.UserService, st service.TweetService)
 		}
 	})
 	return nil
-}
-
-func printRoutes(ctx context.Context, r chi.Router) {
-	walkFunc := func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
-		slog.DebugContext( //nolint:sloglint // global logger configured via slog.SetDefault
-			ctx,
-			"registered route",
-			"method",
-			method,
-			"route",
-			route,
-		)
-		return nil
-	}
-
-	if err := chi.Walk(r, walkFunc); err != nil {
-		slog.ErrorContext( //nolint:sloglint // global logger configured via slog.SetDefault
-			ctx,
-			"error walking routes",
-			errLogKey,
-			err,
-		)
-	}
 }
 
 func main() {
@@ -121,23 +101,21 @@ func run(ctx context.Context, port int) error {
 	st := service.NewTweetService(s)
 	su := service.NewUserService(s)
 
-	// Set up the root router
-	root := chi.NewRouter()
-	root.Use(middleware.Logger)
-	root.Use(middleware.Recoverer)
-	root.Use(middleware.StripSlashes)
+	// Set up the root mux
+	mux := http.NewServeMux()
 
 	// Set up API v1
-	if routerErr := apiV1Router(root, su, st); routerErr != nil {
+	if routerErr := apiV1Router(mux, su, st); routerErr != nil {
 		return fmt.Errorf("setting up api router: %w", routerErr)
 	}
 
-	// Print out the routes if we're in debug mode
-	if slog.Default().Enabled(ctx, slog.LevelDebug) {
-		printRoutes(ctx, root)
-	}
+	// Wrap with global middleware (outermost = first to run)
+	var h http.Handler = mux
+	h = middleware.StripSlashes(h)
+	h = middleware.Recoverer(h)
+	h = middleware.Logger(h)
 
-	return serve(ctx, root, port)
+	return serve(ctx, h, port)
 }
 
 func serve(ctx context.Context, handler http.Handler, port int) error {

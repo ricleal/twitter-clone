@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -37,9 +36,9 @@ func (ts *APITestSuite) SetupTest() {
 	su := service.NewUserService(s)
 	// set up our API
 	twitterAPI := api.New(su, st)
-	r := chi.NewRouter()
-	openapi.HandlerFromMux(twitterAPI, r)
-	ts.server = httptest.NewServer(r)
+	mux := http.NewServeMux()
+	openapi.HandlerFromMux(twitterAPI, mux)
+	ts.server = httptest.NewServer(mux)
 }
 
 func (ts *APITestSuite) TearDownTest() {

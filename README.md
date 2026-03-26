@@ -256,7 +256,7 @@ make test_e2e              # requires Docker Compose
 
 #### OpenAPI
 
-Routes and types generated from [`openapi.yaml`](openapi.yaml) via [`oapi-codegen`](https://github.com/deepmap/oapi-codegen):
+Routes and types generated from [`openapi.yaml`](openapi.yaml) via [`oapi-codegen`](https://github.com/oapi-codegen/oapi-codegen):
 
 ```bash
 make openapi-generate

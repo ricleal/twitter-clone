@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/ricleal/twitter-clone/internal/api/v1/openapi"
 	"github.com/ricleal/twitter-clone/internal/entities"
@@ -133,7 +133,7 @@ func (t *twitterAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 		openapiUsers = append(openapiUsers, &openapi.User{
 			Id:       &userID,
 			Username: user.Username,
-			Email:    openapi_types.Email(user.Email), //nolint:staticcheck // pending oapi-codegen upgrade
+			Email:    openapi_types.Email(user.Email),
 		})
 		if user.Name != "" {
 			userName := user.Name
@@ -195,7 +195,7 @@ func (t *twitterAPI) GetUsersId( //nolint:revive,staticcheck // generated method
 	openapiUser := openapi.User{
 		Id:       &user.ID,
 		Username: user.Username,
-		Email:    openapi_types.Email(user.Email), //nolint:staticcheck // pending oapi-codegen upgrade
+		Email:    openapi_types.Email(user.Email),
 	}
 	if user.Name != "" {
 		openapiUser.Name = &user.Name
