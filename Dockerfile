@@ -3,7 +3,7 @@
 ###############
 # Build stage #
 ###############
-FROM golang:1.20.5-bullseye as builder
+FROM golang:1.25.0-bookworm AS builder
 
 WORKDIR /app
 
