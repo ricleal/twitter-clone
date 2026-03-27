@@ -31,14 +31,18 @@ func NewUserStorage(dbConn bob.Executor) *UserStorage {
 
 // Create creates a new user.
 func (s *UserStorage) Create(ctx context.Context, u *repository.User) error {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return fmt.Errorf("failed to generate user id: %w", err)
+	}
 	setter := &models.UserSetter{
-		ID:       omit.From(uuid.NewString()),
+		ID:       omit.From(id.String()),
 		Username: omit.From(u.Username),
 		Email:    omit.From(u.Email),
 		Name:     omitnull.From(u.Name),
 	}
 
-	_, err := models.Users.Insert(setter).One(ctx, s.dbConn)
+	_, err = models.Users.Insert(setter).One(ctx, s.dbConn)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
 	}
