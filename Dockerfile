@@ -3,35 +3,46 @@
 ###############
 # Build stage #
 ###############
-FROM golang:1.25.0-bookworm AS builder
+FROM golang:1.25.0-alpine AS builder
 
 WORKDIR /app
 
-# Add go module files
+# Download dependencies separately for better layer caching
 COPY go.mod go.sum ./
+RUN go mod download
 
-# Add source code
+# Copy source code
 COPY cmd/ cmd/
 COPY internal/ internal/
 
-# Build
-RUN go build -v -o /app/app ./cmd/twitter
+# Build static binary with optimizations
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -o /app/app ./cmd/twitter
+
 
 
 #################
 # Runtime stage #
 #################
-
-FROM ubuntu:22.04
+FROM alpine:3.20
 
 ARG API_PORT=8888
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+# Install minimal runtime dependencies
+RUN apk add --no-cache curl ca-certificates
 
-COPY --from=builder /app/app /app/
+# Create non-root user
+RUN addgroup -g 1000 app && adduser -u 1000 -G app -s /sbin/nologin -D app
+
+COPY --from=builder --chmod=755 /app/app /app/app
 
 EXPOSE ${API_PORT}
 
-ENTRYPOINT /app/app -port ${API_PORT}
+USER app
+
+HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
+    CMD curl -f http://localhost:${API_PORT}/health || exit 1
+
+ENTRYPOINT ["/app/app"]
+CMD ["-port", "8888"]
