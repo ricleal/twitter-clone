@@ -13,6 +13,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/models"
 )
@@ -30,7 +31,7 @@ func NewUserStorage(dbConn bob.Executor) *UserStorage {
 }
 
 // Create creates a new user.
-func (s *UserStorage) Create(ctx context.Context, u *repository.User) error {
+func (s *UserStorage) Create(ctx context.Context, u *entities.User) error {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return fmt.Errorf("failed to generate user id: %w", err)
@@ -51,15 +52,15 @@ func (s *UserStorage) Create(ctx context.Context, u *repository.User) error {
 }
 
 // FindAll returns all users.
-func (s *UserStorage) FindAll(ctx context.Context) ([]repository.User, error) {
+func (s *UserStorage) FindAll(ctx context.Context) ([]entities.User, error) {
 	ormUsers, err := models.Users.Query().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all users: %w", err)
 	}
 
-	users := make([]repository.User, 0, len(ormUsers))
+	users := make([]entities.User, 0, len(ormUsers))
 	for _, u := range ormUsers {
-		users = append(users, repository.User{
+		users = append(users, entities.User{
 			ID:       uuid.MustParse(u.ID),
 			Username: u.Username,
 			Email:    u.Email,
@@ -71,7 +72,7 @@ func (s *UserStorage) FindAll(ctx context.Context) ([]repository.User, error) {
 }
 
 // FindByID returns a user by ID.
-func (s *UserStorage) FindByID(ctx context.Context, id string) (*repository.User, error) {
+func (s *UserStorage) FindByID(ctx context.Context, id string) (*entities.User, error) {
 	ormUser, err := models.FindUser(ctx, s.dbConn, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -80,7 +81,7 @@ func (s *UserStorage) FindByID(ctx context.Context, id string) (*repository.User
 		return nil, fmt.Errorf("failed to find user by id: %w", err)
 	}
 
-	return &repository.User{
+	return &entities.User{
 		ID:       uuid.MustParse(ormUser.ID),
 		Username: ormUser.Username,
 		Email:    ormUser.Email,
@@ -89,7 +90,7 @@ func (s *UserStorage) FindByID(ctx context.Context, id string) (*repository.User
 }
 
 // FindByUsername returns a user by username.
-func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*repository.User, error) {
+func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*entities.User, error) {
 	ormUser, err := models.Users.Query(
 		sm.Where(models.Users.Columns.Username.EQ(psql.Arg(username))),
 	).One(ctx, s.dbConn)
@@ -100,7 +101,7 @@ func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*rep
 		return nil, fmt.Errorf("failed to find user by username: %w", err)
 	}
 
-	return &repository.User{
+	return &entities.User{
 		ID:       uuid.MustParse(ormUser.ID),
 		Username: ormUser.Username,
 		Email:    ormUser.Email,
@@ -109,7 +110,7 @@ func (s *UserStorage) FindByUsername(ctx context.Context, username string) (*rep
 }
 
 // FindByEmail returns a user by email.
-func (s *UserStorage) FindByEmail(ctx context.Context, email string) (*repository.User, error) {
+func (s *UserStorage) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
 	ormUser, err := models.Users.Query(
 		sm.Where(models.Users.Columns.Email.EQ(psql.Arg(email))),
 	).One(ctx, s.dbConn)
@@ -120,7 +121,7 @@ func (s *UserStorage) FindByEmail(ctx context.Context, email string) (*repositor
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
 
-	return &repository.User{
+	return &entities.User{
 		ID:       uuid.MustParse(ormUser.ID),
 		Username: ormUser.Username,
 		Email:    ormUser.Email,

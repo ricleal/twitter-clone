@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 )
 
@@ -23,7 +24,7 @@ func NewTweetHandler(db *memdb.MemDB) *TweetHandler {
 }
 
 // Create creates a new tweet.
-func (s *TweetHandler) Create(_ context.Context, t *repository.Tweet) error {
+func (s *TweetHandler) Create(_ context.Context, t *entities.Tweet) error {
 	txn := s.db.Txn(true)
 	t.ID = uuid.New()
 	record := &tweetRecord{
@@ -40,19 +41,19 @@ func (s *TweetHandler) Create(_ context.Context, t *repository.Tweet) error {
 }
 
 // FindAll returns all tweets.
-func (s *TweetHandler) FindAll(_ context.Context) ([]repository.Tweet, error) {
+func (s *TweetHandler) FindAll(_ context.Context) ([]entities.Tweet, error) {
 	txn := s.db.Txn(false)
 	it, err := txn.Get(tableTweets, "id")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tweets: %w", err)
 	}
-	var tweets []repository.Tweet //nolint:prealloc // iterator size is not known in advance
+	var tweets []entities.Tweet //nolint:prealloc // iterator size is not known in advance
 	for obj := it.Next(); obj != nil; obj = it.Next() {
 		r, ok := obj.(*tweetRecord)
 		if !ok {
 			continue
 		}
-		tweets = append(tweets, repository.Tweet{
+		tweets = append(tweets, entities.Tweet{
 			ID:      uuid.MustParse(r.ID),
 			Content: r.Content,
 			UserID:  uuid.MustParse(r.UserID),
@@ -62,7 +63,7 @@ func (s *TweetHandler) FindAll(_ context.Context) ([]repository.Tweet, error) {
 }
 
 // FindByID returns a tweet by ID.
-func (s *TweetHandler) FindByID(_ context.Context, id string) (*repository.Tweet, error) {
+func (s *TweetHandler) FindByID(_ context.Context, id string) (*entities.Tweet, error) {
 	txn := s.db.Txn(false)
 	raw, err := txn.First(tableTweets, "id", id)
 	if err != nil {
@@ -75,7 +76,7 @@ func (s *TweetHandler) FindByID(_ context.Context, id string) (*repository.Tweet
 	if !ok {
 		return nil, errors.New("unexpected record type in tweets table")
 	}
-	return &repository.Tweet{
+	return &entities.Tweet{
 		ID:      uuid.MustParse(r.ID),
 		Content: r.Content,
 		UserID:  uuid.MustParse(r.UserID),

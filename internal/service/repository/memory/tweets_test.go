@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
@@ -23,7 +24,7 @@ func TestTweetHandlerCreate(t *testing.T) {
 	tweetHandler := newTestTweetHandler(t)
 
 	// Test creating a new tweet
-	tweet := &repository.Tweet{
+	tweet := &entities.Tweet{
 		Content: "Hello, world!",
 	}
 
@@ -56,11 +57,11 @@ func TestTweetHandlerFindAll(t *testing.T) {
 	tweetHandler := newTestTweetHandler(t)
 
 	// Create some tweets
-	tweet1 := &repository.Tweet{
+	tweet1 := &entities.Tweet{
 		Content: "Tweet 1",
 	}
 
-	tweet2 := &repository.Tweet{
+	tweet2 := &entities.Tweet{
 		Content: "Tweet 2",
 	}
 
@@ -102,7 +103,7 @@ func TestTweetHandlerFindByID(t *testing.T) {
 	tweetHandler := newTestTweetHandler(t)
 
 	// Create a tweet
-	tweet := &repository.Tweet{
+	tweet := &entities.Tweet{
 		Content: "Hello, world!",
 	}
 

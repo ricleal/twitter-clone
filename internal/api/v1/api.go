@@ -80,7 +80,7 @@ func (t *twitterAPI) PostTweets(w http.ResponseWriter, r *http.Request) {
 
 	if err := t.tweetService.Create(ctx, tweet); err != nil {
 		if errors.Is(err, entities.ErrInvalidUserID) {
-			sendAPIError(t.logger, w, http.StatusNoContent, "Invalid user ID", err)
+			sendAPIError(t.logger, w, http.StatusBadRequest, "Invalid user ID", err)
 			return
 		}
 		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error creating tweet", err)
@@ -101,11 +101,11 @@ func (t *twitterAPI) GetTweetsId( //nolint:revive,staticcheck // generated metho
 
 	tweet, err := t.tweetService.FindByID(ctx, id.String())
 	if err != nil {
+		if errors.Is(err, entities.ErrNotFound) {
+			sendAPIError(t.logger, w, http.StatusNotFound, "Tweet not found", err)
+			return
+		}
 		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error getting tweet", err)
-		return
-	}
-	if tweet == nil {
-		sendAPIError(t.logger, w, http.StatusNoContent, "Tweet not found", nil)
 		return
 	}
 
@@ -191,11 +191,11 @@ func (t *twitterAPI) GetUsersId( //nolint:revive,staticcheck // generated method
 
 	user, err := t.userService.FindByID(ctx, id.String())
 	if err != nil {
+		if errors.Is(err, entities.ErrNotFound) {
+			sendAPIError(t.logger, w, http.StatusNotFound, "User not found", err)
+			return
+		}
 		sendAPIError(t.logger, w, http.StatusInternalServerError, "Error getting user", err)
-		return
-	}
-	if user == nil {
-		sendAPIError(t.logger, w, http.StatusNoContent, "User not found", nil)
 		return
 	}
 

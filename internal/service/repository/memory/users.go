@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 )
 
@@ -25,7 +26,7 @@ func NewUserHandler(db *memdb.MemDB) *UserHandler {
 }
 
 // Create creates a new user.
-func (s *UserHandler) Create(_ context.Context, u *repository.User) error {
+func (s *UserHandler) Create(_ context.Context, u *entities.User) error {
 	txn := s.db.Txn(true)
 	u.ID = uuid.New()
 	record := &userRecord{
@@ -43,19 +44,19 @@ func (s *UserHandler) Create(_ context.Context, u *repository.User) error {
 }
 
 // FindAll returns all users.
-func (s *UserHandler) FindAll(_ context.Context) ([]repository.User, error) {
+func (s *UserHandler) FindAll(_ context.Context) ([]entities.User, error) {
 	txn := s.db.Txn(false)
 	it, err := txn.Get(tableUsers, "id")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
-	var users []repository.User //nolint:prealloc // iterator size is not known in advance
+	var users []entities.User //nolint:prealloc // iterator size is not known in advance
 	for obj := it.Next(); obj != nil; obj = it.Next() {
 		r, ok := obj.(*userRecord)
 		if !ok {
 			continue
 		}
-		users = append(users, repository.User{
+		users = append(users, entities.User{
 			ID:       uuid.MustParse(r.ID),
 			Username: r.Username,
 			Email:    r.Email,
@@ -66,7 +67,7 @@ func (s *UserHandler) FindAll(_ context.Context) ([]repository.User, error) {
 }
 
 // FindByID returns a user by ID.
-func (s *UserHandler) FindByID(_ context.Context, id string) (*repository.User, error) {
+func (s *UserHandler) FindByID(_ context.Context, id string) (*entities.User, error) {
 	txn := s.db.Txn(false)
 	raw, err := txn.First(tableUsers, "id", id)
 	if err != nil {
@@ -79,7 +80,7 @@ func (s *UserHandler) FindByID(_ context.Context, id string) (*repository.User, 
 	if !ok {
 		return nil, errors.New(errUnexpectedUserRecord)
 	}
-	return &repository.User{
+	return &entities.User{
 		ID:       uuid.MustParse(r.ID),
 		Username: r.Username,
 		Email:    r.Email,
@@ -88,7 +89,7 @@ func (s *UserHandler) FindByID(_ context.Context, id string) (*repository.User, 
 }
 
 // FindByUsername returns a user by username.
-func (s *UserHandler) FindByUsername(_ context.Context, username string) (*repository.User, error) {
+func (s *UserHandler) FindByUsername(_ context.Context, username string) (*entities.User, error) {
 	txn := s.db.Txn(false)
 	raw, err := txn.First(tableUsers, "username", username)
 	if err != nil {
@@ -101,7 +102,7 @@ func (s *UserHandler) FindByUsername(_ context.Context, username string) (*repos
 	if !ok {
 		return nil, errors.New(errUnexpectedUserRecord)
 	}
-	return &repository.User{
+	return &entities.User{
 		ID:       uuid.MustParse(r.ID),
 		Username: r.Username,
 		Email:    r.Email,
@@ -110,7 +111,7 @@ func (s *UserHandler) FindByUsername(_ context.Context, username string) (*repos
 }
 
 // FindByEmail returns a user by email.
-func (s *UserHandler) FindByEmail(_ context.Context, email string) (*repository.User, error) {
+func (s *UserHandler) FindByEmail(_ context.Context, email string) (*entities.User, error) {
 	txn := s.db.Txn(false)
 	raw, err := txn.First(tableUsers, "email", email)
 	if err != nil {
@@ -123,7 +124,7 @@ func (s *UserHandler) FindByEmail(_ context.Context, email string) (*repository.
 	if !ok {
 		return nil, errors.New(errUnexpectedUserRecord)
 	}
-	return &repository.User{
+	return &entities.User{
 		ID:       uuid.MustParse(r.ID),
 		Username: r.Username,
 		Email:    r.Email,

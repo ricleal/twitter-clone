@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     email varchar(128) UNIQUE NOT NULL,
     name varchar(256),
     deleted_at timestamptz,
-    created_at timestamptz,
-    updated_at timestamptz
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
 );
 
 CREATE TABLE IF NOT EXISTS tweets (
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS tweets (
     user_id uuid REFERENCES users(id) NOT NULL,
     content text NOT NULL,
     deleted_at timestamptz,
-    created_at timestamptz,
-    updated_at timestamptz
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
 );
 
 -- tweets by user (e.g. user timeline)

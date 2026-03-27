@@ -31,6 +31,8 @@ func (s *memStore) Users() repository.UserRepository {
 	return memory.NewUserHandler(s.db)
 }
 
+// ExecTx runs fn directly without isolation — go-memdb does not support
+// nested transactions. The in-memory store is intended for testing only.
 func (s *memStore) ExecTx(_ context.Context, fn func(Store) error) error {
 	if s.TransactionError {
 		return NewExecTxError("a transaction related error occurred")

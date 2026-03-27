@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/memory"
 )
@@ -23,7 +24,7 @@ func TestUserHandlerCreate(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Test creating a new user
-	user := &repository.User{
+	user := &entities.User{
 		Username: "john_doe",
 		Email:    "john.doe@example.com",
 	}
@@ -57,12 +58,12 @@ func TestUserHandlerFindAll(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Create some users
-	user1 := &repository.User{
+	user1 := &entities.User{
 		Username: "john_doe",
 		Email:    "john.doe@example.com",
 	}
 
-	user2 := &repository.User{
+	user2 := &entities.User{
 		Username: "jane_doe",
 		Email:    "jane.doe@example.com",
 	}
@@ -105,7 +106,7 @@ func TestUserHandlerFindByID(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Create a user
-	user := &repository.User{
+	user := &entities.User{
 		Username: "john_doe",
 		Email:    "john.doe@example.com",
 	}
@@ -141,7 +142,7 @@ func TestUserHandlerFindByUsername(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Create a user
-	user := &repository.User{
+	user := &entities.User{
 		Username: "john_doe",
 		Email:    "john.doe@example.com",
 	}
@@ -177,7 +178,7 @@ func TestUserHandlerFindByEmail(t *testing.T) {
 	userHandler := newTestUserHandler(t)
 
 	// Create a user
-	user := &repository.User{
+	user := &entities.User{
 		Username: "john_doe",
 		Email:    "john.doe@example.com",
 	}

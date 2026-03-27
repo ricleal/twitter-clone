@@ -26,9 +26,28 @@ import (
 const errLogKey = "error" // slog attribute key for error values
 
 const (
-	serverReadTimeout = 10 * time.Second // HTTP server read timeout
-	shutdownTimeout   = 10 * time.Second // graceful shutdown deadline
+	serverReadTimeout  = 10 * time.Second // HTTP server read timeout
+	serverWriteTimeout = 30 * time.Second // HTTP server write timeout
+	serverIdleTimeout  = 60 * time.Second // HTTP server idle timeout
+	shutdownTimeout    = 10 * time.Second // graceful shutdown deadline
 )
+
+// requestLogger returns a middleware that logs each request using slog.
+func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
+			logger.Info("request",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"status", ww.Status(),
+				"duration", time.Since(start),
+			)
+		})
+	}
+}
 
 func apiV1Router(root *http.ServeMux, logger *slog.Logger, su service.UserService, st service.TweetService) error {
 	twitterAPI := apiv1.New(logger, su, st)
@@ -99,6 +118,15 @@ func run(ctx context.Context, logger *slog.Logger, port int) error {
 	// Set up the root mux
 	mux := http.NewServeMux()
 
+	// Health endpoint - probes the database connection
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		if pingErr := dbServer.Ping(r.Context()); pingErr != nil {
+			http.Error(w, "db unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
 	// Set up API v1
 	if routerErr := apiV1Router(mux, logger, su, st); routerErr != nil {
 		return fmt.Errorf("setting up api router: %w", routerErr)
@@ -108,17 +136,19 @@ func run(ctx context.Context, logger *slog.Logger, port int) error {
 	var h http.Handler = mux
 	h = middleware.StripSlashes(h)
 	h = middleware.Recoverer(h)
-	h = middleware.Logger(h)
+	h = requestLogger(logger)(h)
 
 	return serve(ctx, logger, h, port)
 }
 
 func serve(ctx context.Context, logger *slog.Logger, handler http.Handler, port int) error {
 	srv := &http.Server{
-		Handler:     handler,
-		Addr:        fmt.Sprintf(":%d", port),
-		BaseContext: func(_ net.Listener) context.Context { return ctx },
-		ReadTimeout: serverReadTimeout,
+		Handler:      handler,
+		Addr:         fmt.Sprintf(":%d", port),
+		BaseContext:  func(_ net.Listener) context.Context { return ctx },
+		ReadTimeout:  serverReadTimeout,
+		WriteTimeout: serverWriteTimeout,
+		IdleTimeout:  serverIdleTimeout,
 	}
 
 	errChan := make(chan error)

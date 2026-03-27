@@ -12,6 +12,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/models"
 )
@@ -29,7 +30,7 @@ func NewTweetStorage(dbConn bob.Executor) *TweetStorage {
 }
 
 // Create creates a new tweet.
-func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) error {
+func (s *TweetStorage) Create(ctx context.Context, t *entities.Tweet) error {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return fmt.Errorf("failed to generate tweet id: %w", err)
@@ -49,15 +50,15 @@ func (s *TweetStorage) Create(ctx context.Context, t *repository.Tweet) error {
 }
 
 // FindAll returns all tweets.
-func (s *TweetStorage) FindAll(ctx context.Context) ([]repository.Tweet, error) {
+func (s *TweetStorage) FindAll(ctx context.Context) ([]entities.Tweet, error) {
 	ormTweets, err := models.Tweets.Query().All(ctx, s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
 
-	tweets := make([]repository.Tweet, 0, len(ormTweets))
+	tweets := make([]entities.Tweet, 0, len(ormTweets))
 	for _, t := range ormTweets {
-		tweets = append(tweets, repository.Tweet{
+		tweets = append(tweets, entities.Tweet{
 			ID:      uuid.MustParse(t.ID),
 			Content: t.Content,
 			UserID:  uuid.MustParse(t.UserID),
@@ -68,7 +69,7 @@ func (s *TweetStorage) FindAll(ctx context.Context) ([]repository.Tweet, error) 
 }
 
 // FindByID returns a tweet by ID.
-func (s *TweetStorage) FindByID(ctx context.Context, id string) (*repository.Tweet, error) {
+func (s *TweetStorage) FindByID(ctx context.Context, id string) (*entities.Tweet, error) {
 	ormTweet, err := models.Tweets.Query(
 		sm.Where(models.Tweets.Columns.ID.EQ(psql.Arg(id))),
 	).One(ctx, s.dbConn)
@@ -79,7 +80,7 @@ func (s *TweetStorage) FindByID(ctx context.Context, id string) (*repository.Twe
 		return nil, fmt.Errorf("failed to find tweet by id: %w", err)
 	}
 
-	return &repository.Tweet{
+	return &entities.Tweet{
 		ID:      uuid.MustParse(ormTweet.ID),
 		Content: ormTweet.Content,
 		UserID:  uuid.MustParse(ormTweet.UserID),

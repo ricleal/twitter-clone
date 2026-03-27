@@ -58,11 +58,7 @@ func (s *tweetService) Create(ctx context.Context, t *entities.Tweet) error {
 			return fmt.Errorf("invalid tweet: %w", err)
 		}
 
-		tweet := &repository.Tweet{
-			Content: t.Content,
-			UserID:  t.UserID,
-		}
-		err = tweetRepo.Create(ctx, tweet)
+		err = tweetRepo.Create(ctx, t)
 		if err != nil {
 			return fmt.Errorf("could not create tweet: %w", err)
 		}
@@ -80,17 +76,7 @@ func (s *tweetService) FindAll(ctx context.Context) ([]entities.Tweet, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to find all tweets: %w", err)
 	}
-
-	entTweets := make([]entities.Tweet, 0, len(tweets))
-	for _, t := range tweets {
-		entTweets = append(entTweets, entities.Tweet{
-			ID:      t.ID,
-			Content: t.Content,
-			UserID:  t.UserID,
-		})
-	}
-
-	return entTweets, nil
+	return tweets, nil
 }
 
 // FindByID returns a tweet by ID.
@@ -99,18 +85,9 @@ func (s *tweetService) FindByID(ctx context.Context, id string) (*entities.Tweet
 	t, err := repo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return nil, nil //nolint:nilnil // caller checks nil pointer for not-found
+			return nil, entities.ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to find tweet by id %s: %w", id, err)
 	}
-
-	if t == nil {
-		return nil, nil //nolint:nilnil // caller checks nil pointer for not-found
-	}
-
-	return &entities.Tweet{
-		ID:      t.ID,
-		Content: t.Content,
-		UserID:  t.UserID,
-	}, nil
+	return t, nil
 }

@@ -12,6 +12,7 @@ import (
 )
 
 // Create a regular expression to match valid email addresses.
+
 var reEmail = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$`)
 
 // validateEmail validates an email address.
@@ -42,13 +43,7 @@ func (s *userService) Create(ctx context.Context, u *entities.User) error {
 	if !validateEmail(u.Email) {
 		return entities.ErrInvalidEmail
 	}
-
-	user := &repository.User{
-		Username: u.Username,
-		Email:    u.Email,
-		Name:     u.Name,
-	}
-	return s.store.Users().Create(ctx, user) //nolint:wrapcheck //no need to wrap here
+	return s.store.Users().Create(ctx, u) //nolint:wrapcheck //no need to wrap here
 }
 
 // FindAll returns all users.
@@ -57,17 +52,7 @@ func (s *userService) FindAll(ctx context.Context) ([]entities.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not find users: %w", err)
 	}
-
-	entUsers := make([]entities.User, 0, len(users))
-	for _, u := range users {
-		entUsers = append(entUsers, entities.User{
-			ID:       u.ID,
-			Username: u.Username,
-			Email:    u.Email,
-			Name:     u.Name,
-		})
-	}
-	return entUsers, nil
+	return users, nil
 }
 
 // FindByID returns a user by ID.
@@ -75,19 +60,9 @@ func (s *userService) FindByID(ctx context.Context, id string) (*entities.User, 
 	u, err := s.store.Users().FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return nil, nil //nolint:nilnil // caller checks nil pointer for not-found
+			return nil, entities.ErrNotFound
 		}
 		return nil, fmt.Errorf("could not find user: %w", err)
 	}
-
-	if u == nil {
-		return nil, fmt.Errorf("user with id %s not found", id)
-	}
-
-	return &entities.User{
-		ID:       u.ID,
-		Username: u.Username,
-		Email:    u.Email,
-		Name:     u.Name,
-	}, nil
+	return u, nil
 }
