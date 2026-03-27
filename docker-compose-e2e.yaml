@@ -1,32 +1,30 @@
-version: "3.7"
 services:
   postgres:
-    image: postgres:18
+    image: postgres:18-alpine
+    restart: on-failure
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    command: >
-      -c ssl=on
-      -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
-      -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+      POSTGRES_INITDB_ARGS: -c ssl=on -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} --dbname ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
       interval: 5s
-      timeout: 5s
-      retries: 12
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     networks:
       - pgdata
 
   migrate:
-    image: migrate/migrate
+    image: migrate/migrate:latest
+    restart: on-failure
     volumes:
-      - ./migrations:/migrations
-    command: [
-      "-path", "/migrations", 
-      "-database", "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable",
-      "-verbose", "up"
-      ]
+      - ./migrations:/migrations:ro
+    command:
+      - -path=/migrations
+      - -database=postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
+      - up
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,37 +37,40 @@ services:
       dockerfile: Dockerfile
       args:
         - API_PORT=${API_PORT}
+    restart: on-failure
     depends_on:
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable"
+      DB_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
       LOG_LEVEL: ${LOG_LEVEL}
       API_PORT: ${API_PORT}
     healthcheck:
-      test: ["CMD-SHELL", "curl -sSf http://localhost:${API_PORT}/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT}/health"]
       interval: 5s
-      timeout: 5s
-      retries: 12
+      timeout: 3s
+      retries: 3
+      start_period: 10s
     networks:
       - pgdata
-    
 
   curl:
     image: badouralix/curl-jq:alpine
+    restart: on-failure
     environment:
       API_PORT: ${API_PORT}
     volumes:
-      - ./e2e:/e2e
+      - ./e2e:/e2e:ro
     depends_on:
       api:
         condition: service_healthy
     command: /bin/sh -c "/e2e/test.sh"
     networks:
       - pgdata
-  
+
   wait:
-    image: busybox:1.36.1
+    image: busybox:latest
+    restart: on-failure
     depends_on:
       curl:
         condition: service_completed_successfully
@@ -78,4 +79,5 @@ services:
       - pgdata
 
 networks:
-  pgdata: {}
+  pgdata:
+    driver: bridge
