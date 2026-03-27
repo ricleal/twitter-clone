@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5/middleware"
 	oapiMiddleware "github.com/oapi-codegen/nethttp-middleware"
 
@@ -57,9 +58,12 @@ func apiV1Router(root *http.ServeMux, logger *slog.Logger, su service.UserServic
 		return fmt.Errorf("error getting swagger: %w", err)
 	}
 
-	// Clear out the servers array in the swagger spec, that skips validating
-	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
+	// Set the servers array to the API base URL so kin-openapi can correctly
+	// strip the path prefix when validating requests. The validator will only
+	// accept requests matching the server path.
+	swagger.Servers = []*openapi3.Server{
+		{URL: "/api/v1"},
+	}
 
 	apiJSON, err := json.Marshal(swagger)
 	if err != nil {

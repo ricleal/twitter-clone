@@ -7,8 +7,11 @@ echo "Running E2E Tests"
 
 # compare results
 echo "Comparing Results"
-# The regex would be: '  "(user_)?id":.*$' but it doesn't work on the container :shrug:
-errors=$(diff -I '  ".*id": .*$' /e2e/results.txt /e2e/expected.txt)
+# compare results, ignoring id/user_id fields (values differ per run)
+# Uses grep -v instead of diff -I, which is not supported in BusyBox diff
+grep -v '".*id":' /e2e/results.txt > /tmp/results_no_id.txt
+grep -v '".*id":' /e2e/expected.txt > /tmp/expected_no_id.txt
+errors=$(diff /tmp/results_no_id.txt /tmp/expected_no_id.txt)
 
 # exit with error code if there are differences
 if [ -n "$errors" ]; then

@@ -46,19 +46,25 @@ services:
       DB_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable"
       LOG_LEVEL: ${LOG_LEVEL}
       API_PORT: ${API_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:${API_PORT}/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     networks:
       - pgdata
     
 
   curl:
-    image: badouralix/curl-jq:ubuntu
+    image: badouralix/curl-jq:alpine
     environment:
       API_PORT: ${API_PORT}
     volumes:
       - ./e2e:/e2e
     depends_on:
-      - api
-    command: /bin/sh -c "while ! curl -sSf -o /dev/null http://api:${API_PORT}/api/v1/api.json; do sleep 1; done && /e2e/test.sh"
+      api:
+        condition: service_healthy
+    command: /bin/sh -c "/e2e/test.sh"
     networks:
       - pgdata
   

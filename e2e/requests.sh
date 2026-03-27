@@ -6,7 +6,7 @@ CURL="curl -s"
 
 ${CURL} -X POST -H "Content-Type: application/json" \
 -d '{ "username": "foo", "name": "John Doe", "email": "jd@mail.com" }' \
-http://api:${API_PORT}/api/v1/users | jq .
+http://api:${API_PORT}/api/v1/users
 
 ## Get all users
 ${CURL} http://api:${API_PORT}/api/v1/users  | jq .
@@ -20,7 +20,7 @@ ${CURL} http://api:${API_PORT}/api/v1/users/$user_id  | jq .
 ## Create a tweet
 ${CURL} -X POST -H "Content-Type: application/json" \
 -d '{"user_id":"'$user_id'", "content": "Hello World!" }' \
-http://api:${API_PORT}/api/v1/tweets  | jq .
+http://api:${API_PORT}/api/v1/tweets
 
 # Get all tweets
 ${CURL} http://api:${API_PORT}/api/v1/tweets  | jq .
