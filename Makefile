@@ -50,10 +50,10 @@ test_integration: ## Run integration tests
 
 .PHONY: test_e2e
 test_e2e: ## Run end-to-end tests
-	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes --remove-orphans >/dev/null 2>&1 || true
+	@$(ENV_VARS) docker compose -f docker-compose-e2e.yaml -p e2e down --volumes --remove-orphans >/dev/null 2>&1 || true
 	@status=0; \
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --build --abort-on-container-exit --exit-code-from curl curl || status=$$?; \
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes; \
+	$(ENV_VARS) docker compose -f docker-compose-e2e.yaml -p e2e up --build --abort-on-container-exit --exit-code-from curl curl || status=$$?; \
+	$(ENV_VARS) docker compose -f docker-compose-e2e.yaml -p e2e down --volumes; \
 	exit $$status
 
 # Instalation: brew install golangci-lint
@@ -67,11 +67,11 @@ lint: ## Lint and format source code based on golangci configuration
 
 .PHONY: db-start
 db-start: ## Postgres start
-	@$(ENV_VARS) docker-compose -f docker-compose-db.yaml -p db up --detach postgres-dev
+	@$(ENV_VARS) docker compose -f docker-compose-db.yaml -p db up --detach postgres-dev
 
 .PHONY: db-stop
 db-stop: ## Postgres stop
-	@$(ENV_VARS) docker-compose -f docker-compose-db.yaml -p db stop postgres-dev
+	@$(ENV_VARS) docker compose -f docker-compose-db.yaml -p db stop postgres-dev
 
 .PHONY: db-cli
 db-cli: ## Start the Postgres CLI
@@ -83,11 +83,11 @@ db-cli: ## Start the Postgres CLI
 
 .PHONY: api-start
 api-start: ## Run docker API container
-	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api up --detach --build api-dev
+	@$(ENV_VARS) docker compose -f docker-compose-api.yaml -p api up --detach --build api-dev
 
 .PHONY: api-stop
 api-stop: ## Stop docker API container
-	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api stop api-dev
+	@$(ENV_VARS) docker compose -f docker-compose-api.yaml -p api stop api-dev
 
 
 ### DB migration targets
@@ -144,8 +144,8 @@ help:
 
 .PHONY: docker-up
 docker-up: ## Run docker container
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --build
+	@$(ENV_VARS) docker compose -f docker-compose.yaml up --build
 
 .PHONY: docker-down
 docker-down: ## Stop docker container
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml down
+	@$(ENV_VARS) docker compose -f docker-compose.yaml down

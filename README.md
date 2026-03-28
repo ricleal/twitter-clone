@@ -158,7 +158,7 @@ GET  /api/v1/users/{id}      # Get a user by ID
 ### Prerequisites
 
 - docker
-- docker-compose
+- Docker Compose v2 (`docker compose`)
 
 ### Start
 
