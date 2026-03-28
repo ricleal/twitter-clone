@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	testcontainers "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"github.com/ricleal/twitter-clone/internal/service/repository"
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/test"
 	"github.com/ricleal/twitter-clone/internal/service/store"
@@ -57,7 +57,7 @@ func (ts *StoreTestSuite) TestTransaction() {
 		usersRepo := s.Users()
 
 		// create a user
-		err := usersRepo.Create(ctx, &repository.User{
+		err := usersRepo.Create(ctx, &entities.User{
 			Username: "test",
 			Email:    "test@test.com",
 		})
@@ -69,7 +69,7 @@ func (ts *StoreTestSuite) TestTransaction() {
 		ts.Require().Equal("test", user.Username)
 
 		// create a tweet
-		tweet := &repository.Tweet{
+		tweet := &entities.Tweet{
 			UserID:  user.ID,
 			Content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		}

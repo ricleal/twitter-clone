@@ -7,7 +7,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/url"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/docker/go-connections/nat"
@@ -26,13 +30,26 @@ const (
 )
 
 func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
-	dbname := os.Getenv("DB_NAME") + "_test"
-	user := os.Getenv("DB_USERNAME")
-	password := os.Getenv("DB_PASSWORD")
-	port := os.Getenv("DB_PORT")
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		return nil, errors.New("DB_URL not set")
+	}
+
+	parsedURL, err := url.Parse(dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse DB_URL: %w", err)
+	}
+
+	user := parsedURL.User.Username()
+	password, _ := parsedURL.User.Password()
+	baseDBName := strings.TrimPrefix(parsedURL.Path, "/")
+	dbname := baseDBName + "_test"
+	if user == "" || password == "" || baseDBName == "" {
+		return nil, errors.New("DB_URL must include username, password and database name")
+	}
 
 	container, err := postgres.Run(ctx,
-		"docker.io/postgres:15.3",
+		"docker.io/postgres:18-alpine",
 		postgres.WithDatabase(dbname),
 		postgres.WithUsername(user),
 		postgres.WithPassword(password),
@@ -45,7 +62,7 @@ func setupContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 		return nil, fmt.Errorf("failed to run postgres container: %w", err)
 	}
 
-	mappedPort, err := container.MappedPort(ctx, nat.Port(port))
+	mappedPort, err := container.MappedPort(ctx, nat.Port("5432/tcp"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mapped port: %w", err)
 	}
@@ -92,6 +109,13 @@ func setupMigrations(_ context.Context) error {
 	}
 
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		_, thisFile, _, ok := runtime.Caller(0)
+		if !ok {
+			return errors.New("failed to resolve migrations path")
+		}
+		migrationsPath = filepath.Clean(filepath.Join(filepath.Dir(thisFile), "../../../../../migrations"))
+	}
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://"+migrationsPath,
 		"postgres", driver)
@@ -125,6 +149,9 @@ func SetupDB(ctx context.Context) (*postgres.PostgresContainer, error) {
 
 // TeardownDB terminates the postgres container.
 func TeardownDB(ctx context.Context, container *postgres.PostgresContainer) error {
+	if container == nil {
+		return nil
+	}
 	err := container.Terminate(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to terminate container: %w", err)

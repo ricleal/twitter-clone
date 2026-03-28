@@ -1,5 +1,5 @@
 psql:
-  dsn: "postgres://postgres:Pass_1234@localhost:5433/twitter?sslmode=disable"
+  dsn: "__DB_URL_LOCAL__"
   except:
     public.schema_migrations:
 

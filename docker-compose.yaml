@@ -3,11 +3,11 @@ services:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -22,7 +22,7 @@ services:
       - ./migrations:/migrations:ro
     command:
       - -path=/migrations
-      - -database=postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
+      - -database=${DB_URL_COMPOSE}
       - up
     depends_on:
       postgres:
@@ -41,7 +41,7 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
+      DB_URL: ${DB_URL_COMPOSE}
       LOG_LEVEL: ${LOG_LEVEL}
       API_PORT: ${API_PORT}
     ports:

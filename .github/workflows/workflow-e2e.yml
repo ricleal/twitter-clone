@@ -18,6 +18,8 @@ jobs:
   build:
     timeout-minutes: 20
     runs-on: ubuntu-latest
+    env:
+      MIGRATIONS_PATH: ${{ github.workspace }}/migrations
 
     steps:
       - name: Checkout

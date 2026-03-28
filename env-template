@@ -2,11 +2,14 @@
 # Copy this file to .env and fill in the values: cp env-template .env
 # The values in this file are the makefile defaults.
 # Export it as: export $(egrep -v '^#' .env | xargs)
-DB_HOSTNAME=localhost
-DB_PORT=5432
-DB_NAME=twitter
-DB_USERNAME=postgres
-DB_PASSWORD=Pass1234!
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=Pass_1234
+POSTGRES_DB=twitter
+DB_URL_LOCAL=postgres://postgres:Pass_1234@localhost:5433/twitter?sslmode=disable
+DB_URL_COMPOSE=postgres://postgres:Pass_1234@postgres:5432/twitter?sslmode=disable
+DB_URL_API_DEV=postgres://postgres:Pass_1234@host.docker.internal:5433/twitter?sslmode=disable
+DB_URL_E2E=postgres://postgres:Pass_1234@postgres:5432/twitter?sslmode=disable
+DB_URL=postgres://postgres:Pass_1234@localhost:5433/twitter?sslmode=disable
 API_PORT=8888
-MIGRATIONS_PATH=/Users/ricardol/git-perso/twitter-clone/migrations
+MIGRATIONS_PATH=/full/path/migrations
 LOG_LEVEL=debug

@@ -4,13 +4,15 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 # DB settings
-DB_HOSTNAME ?= localhost
-DB_PORT ?= 5432
-DB_NAME ?= twitter
-DB_USERNAME ?= postgres
-DB_PASSWORD ?= Pass1234!
+POSTGRES_USER ?= postgres
+POSTGRES_PASSWORD ?= Pass_1234
+POSTGRES_DB ?= twitter
 
-DB_URL ?= "postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOSTNAME):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
+DB_URL_LOCAL ?= postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5433/$(POSTGRES_DB)?sslmode=disable
+DB_URL_COMPOSE ?= postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
+DB_URL_API_DEV ?= postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@host.docker.internal:5433/$(POSTGRES_DB)?sslmode=disable
+DB_URL_E2E ?= postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
+DB_URL ?= $(DB_URL_LOCAL)
 
 MIGRATIONS_PATH ?= $(shell pwd)/migrations
 
@@ -18,14 +20,17 @@ LOG_LEVEL ?= debug
 API_PORT ?= 8888
 
 ENV_VARS = \
-	DB_HOSTNAME=$(DB_HOSTNAME) \
-	DB_PORT=$(DB_PORT) \
-	DB_NAME=$(DB_NAME) \
-	DB_USERNAME=$(DB_USERNAME) \
-	DB_PASSWORD=$(DB_PASSWORD) \
+	POSTGRES_USER=$(POSTGRES_USER) \
+	POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+	POSTGRES_DB=$(POSTGRES_DB) \
+	DB_URL=$(DB_URL) \
+	DB_URL_LOCAL=$(DB_URL_LOCAL) \
+	DB_URL_COMPOSE=$(DB_URL_COMPOSE) \
+	DB_URL_API_DEV=$(DB_URL_API_DEV) \
+	DB_URL_E2E=$(DB_URL_E2E) \
+	MIGRATIONS_PATH=$(MIGRATIONS_PATH) \
 	LOG_LEVEL=$(LOG_LEVEL) \
 	API_PORT=$(API_PORT) \
-	DB_URL=$(DB_URL) \
 	$(NULL)
 
 
@@ -41,7 +46,7 @@ test: ## Run unit tests
 
 .PHONY: test_integration
 test_integration: ## Run integration tests
-	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -race ./... -tags=integration
+	@$(ENV_VARS) go test -race ./... -tags=integration
 
 .PHONY: test_e2e
 test_e2e: ## Run end-to-end tests
@@ -71,8 +76,7 @@ db-stop: ## Postgres stop
 .PHONY: db-cli
 db-cli: ## Start the Postgres CLI
 	@command -v pgcli || (echo "Please install `pgcli`." && exit 1)
-	@PGPASSWORD='$(DB_PASSWORD)' \
-		pgcli -h $(DB_HOSTNAME) -u $(DB_USERNAME) -p $(DB_PORT) -d $(DB_NAME)
+	@pgcli $(DB_URL)
 
 #
 ## API targets
@@ -127,7 +131,10 @@ openapi-generate: ## Generate OpenAPI client
 .PHONY: db-orm-models
 db-orm-models: ## Generate Go database models
 	@command -v bobgen-psql || (echo "Please install bobgen-psql: go install github.com/stephenafamo/bob/gen/bobgen-psql@latest" && exit 1)
-	bobgen-psql -c bobgen.yaml
+	@tmp_cfg=$$(mktemp); \
+	sed 's|__DB_URL_LOCAL__|$(DB_URL_LOCAL)|g' bobgen.yaml > "$$tmp_cfg"; \
+	bobgen-psql -c "$$tmp_cfg"; \
+	rm -f "$$tmp_cfg"
 
 .PHONY: help
 help:

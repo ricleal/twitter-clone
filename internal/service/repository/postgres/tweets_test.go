@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	testcontainers "github.com/testcontainers/testcontainers-go/modules/postgres"
 
+	"github.com/ricleal/twitter-clone/internal/entities"
 	"github.com/ricleal/twitter-clone/internal/service/repository"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres"
 	"github.com/ricleal/twitter-clone/internal/service/repository/postgres/test"
@@ -67,7 +68,7 @@ func (ts *TweetsTestSuite) TestData() {
 	}
 
 	{
-		err := u.Create(ctx, &repository.User{
+		err := u.Create(ctx, &entities.User{
 			Username: "test",
 			Email:    "test@test.com",
 		})
@@ -103,7 +104,7 @@ func (ts *TweetsTestSuite) TestData() {
 	}
 	// create a tweet
 	{
-		tweet := &repository.Tweet{
+		tweet := &entities.Tweet{
 			UserID:  uuid.Must(uuid.Parse(userID)),
 			Content: "Lorem ipsum dolor sit amet",
 		}
@@ -118,7 +119,7 @@ func (ts *TweetsTestSuite) TestData() {
 	}
 	// create a tweet
 	{
-		tweet2 := &repository.Tweet{
+		tweet2 := &entities.Tweet{
 			UserID:  uuid.Must(uuid.Parse(userID)),
 			Content: "Ut enim ad minim veniam",
 		}

@@ -18,6 +18,8 @@ jobs:
   build:
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    env:
+      MIGRATIONS_PATH: ${{ github.workspace }}/migrations
 
     steps:
       - name: Checkout
@@ -40,3 +42,6 @@ jobs:
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.8
+          install-mode: goinstall

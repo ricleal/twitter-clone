@@ -63,7 +63,7 @@ func (ts *TweetsTestSuite) TestValid() {
 
 	// get an user by id empty DB
 	user, err := su.FindByID(ctx, uuid.New().String())
-	ts.Require().NoError(err)
+	ts.Require().ErrorIs(err, entities.ErrNotFound)
 	ts.Require().Nil(user)
 
 	err = su.Create(ctx, &entities.User{
