@@ -28,7 +28,9 @@ graph TD
     end
 
     subgraph api ["internal/api/v1 — HTTP Layer"]
-        Router["chi.Mux\nLogger · Recoverer · OapiRequestValidator · AllowContentType"]
+        Router["http.ServeMux\nrequestLogger · Recoverer · StripSlashes"]
+        Health["GET /health\nDB ping"]
+        Validator["Generated std-http handler\nOapiRequestValidator · AllowContentType · SetHeader"]
         H["twitterAPI\nimplements ServerInterface\nGetTweets · PostTweets · GetTweetsId\nGetUsers · PostUsers · GetUsersId"]
     end
 
@@ -49,10 +51,12 @@ graph TD
         PR["postgres.TweetStorage\npostgres.UserStorage"]
     end
 
-    PG[("PostgreSQL 15\n:5432")]
+    PG[("PostgreSQL 18\n:5432")]
 
     Client --> Router
-    Router --> H
+    Router --> Health
+    Router --> Validator
+    Validator --> H
     H --> TS & US
     TS & US --"Store interface\nTweets() · Users() · ExecTx()"--> MS & PS
     MS --> MR
@@ -73,32 +77,36 @@ graph TD
 
 ```
 HTTP request
-  └─ chi.Mux
-       ├─ middleware: Logger → Recoverer → StripSlashes
-       ├─ middleware: OapiRequestValidator  (validates against openapi.yaml)
-       ├─ middleware: AllowContentType("application/json")
-       └─ twitterAPI handler  (internal/api/v1)
-            └─ TweetService / UserService  (internal/service)
-                 └─ Store.ExecTx / .Tweets() / .Users()  (internal/service/store)
+  └─ http.ServeMux
+      ├─ middleware: requestLogger → Recoverer → StripSlashes
+      ├─ GET /health → postgres.Storage.Ping
+      └─ /api/v1/*
+          ├─ generated std-http handler
+          ├─ middleware: OapiRequestValidator  (validates against openapi.yaml)
+          ├─ middleware: AllowContentType("application/json")
+          ├─ middleware: SetHeader("Content-Type", "application/json")
+          └─ twitterAPI handler  (internal/api/v1)
+              └─ TweetService / UserService  (internal/service)
+                  └─ Store.ExecTx / .Tweets() / .Users()  (internal/service/store)
                       └─ TweetRepository / UserRepository  (internal/service/repository)
-                           ├─ [test]  memory.Handler  → go-memdb  (in-process)
-                           └─ [prod]  postgres.Storage → bob ORM → lib/pq → PostgreSQL
+                          ├─ [test]  memory handlers → go-memdb  (in-process)
+                          └─ [prod]  postgres storage → bob ORM → lib/pq → PostgreSQL
 ```
 
-### Type Mapping Across Layers
+### Type And Interface Mapping Across Layers
 
-Each layer owns its own data types, keeping domain logic decoupled from storage concerns:
+The HTTP, domain, and ORM layers each own their concrete types. The repository layer exposes interfaces rather than storage structs, keeping business logic decoupled from persistence details:
 
 | Layer | Package | Types |
 |---|---|---|
 | HTTP | `internal/api/v1/openapi` | `openapi.User`, `openapi.Tweet` — generated DTOs |
 | Domain | `internal/entities` | `entities.User`, `entities.Tweet` — pure domain models |
-| Repository | `internal/service/repository` | `repository.User`, `repository.Tweet` — storage structs |
+| Repository | `internal/service/repository` | `repository.UserRepository`, `repository.TweetRepository` — persistence interfaces |
 | ORM | `internal/service/repository/postgres/models` | `models.User`, `models.Tweet` — bob-generated |
 
 ### Layer Descriptions
 
-**`cmd/twitter`** — Binary entry point. Wires all dependencies, builds the `chi.Mux`, registers middleware, starts the `net/http` server with graceful shutdown on `SIGINT`/`SIGTERM`.
+**`cmd/twitter`** — Binary entry point. Wires all dependencies, builds the root `http.ServeMux`, registers middleware, exposes `GET /health`, and starts the `net/http` server with graceful shutdown on `SIGINT`/`SIGTERM`.
 
 **`internal/api/v1`** — HTTP handler layer. `twitterAPI` implements the oapi-codegen `ServerInterface`. Routes and request/response types are generated from [`openapi.yaml`](openapi.yaml) by `oapi-codegen` into `internal/api/v1/openapi/`.
 
@@ -120,11 +128,11 @@ Two implementations:
 - **`memStore`** — backed by `hashicorp/go-memdb`; used in unit tests (no Docker required). `ExecTx` calls `fn(s)` directly; a `TransactionError` flag allows injecting failures in tests.
 - **`persistentStore`** — backed by `bob.DB`; used in production. `ExecTx` calls `bob.DB.RunInTx`, starting a real PostgreSQL transaction. Inside the transaction, a `persistentStoreTx` wraps the `bob.Executor` so all repository calls share the same connection. Nested `ExecTx` is a no-op passthrough (PostgreSQL savepoints are not used).
 
-**`internal/service/repository`** — Defines `TweetRepository` and `UserRepository` interfaces along with the shared `repository.User` / `repository.Tweet` storage structs. Business logic never imports repository implementations directly.
+**`internal/service/repository`** — Defines `TweetRepository` and `UserRepository` interfaces. Business logic depends on these contracts and the `entities` package, never on repository implementations directly.
 
 **`internal/service/repository/memory`** — go-memdb implementation. Schema defines two tables (`users`, `tweets`) with indexes on `id`, `username`, and `email`. Each method manages its own atomic read/write transaction internally — no transaction state crosses the repository boundary.
 
-**`internal/service/repository/postgres`** — PostgreSQL implementation using the [bob](https://github.com/stephenafamo/bob) ORM. Generated sub-packages (`models/`, `models/factory/`, `dberrors/`, `dbinfo/`) are produced by `bobgen-psql` from the live database schema.
+**`internal/service/repository/postgres`** — PostgreSQL implementation using the [bob](https://github.com/stephenafamo/bob) ORM. Generated sub-packages (`models/`, `dberrors/`, `dbinfo/`) are produced by `bobgen-psql` from the live database schema.
 
 ---
 
@@ -133,6 +141,7 @@ Two implementations:
 Routes are generated from [`openapi.yaml`](openapi.yaml) and mounted at `/api/v1`:
 
 ```bash
+GET  /health                 # Readiness / liveness check (DB ping)
 GET  /api/v1/api.json        # Live OpenAPI spec
 GET  /api/v1/tweets          # List all tweets
 POST /api/v1/tweets          # Create a tweet
@@ -280,9 +289,14 @@ Start a local database (isolated Docker bridge network `twitter-clone-db`, bound
 make db-start
 ```
 
-Copy `env-template` to `.env` and adjust if using an external database. Apply migrations:
+Copy `env-template` to `.env` and adjust values as needed, especially `MIGRATIONS_PATH` if you plan to export the file directly.
+
+The template contains shared `POSTGRES_*` settings plus context-specific connection strings for local dev, Compose, API-only Docker runs, and E2E runs (`DB_URL_LOCAL`, `DB_URL_COMPOSE`, `DB_URL_API_DEV`, `DB_URL_E2E`).
+
+If you use `direnv`, the checked-in `.envrc` will load `.env` automatically. Otherwise export it manually before running commands that depend on those variables.
 
 ```bash
+export $(egrep -v '^#' .env | xargs)
 make db-migrate-up
 ```
 
