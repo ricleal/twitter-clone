@@ -28,6 +28,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 FROM alpine:3.20
 
 ARG API_PORT=8888
+ENV API_PORT=${API_PORT}
 
 # Install minimal runtime dependencies
 RUN apk add --no-cache curl ca-certificates
@@ -44,5 +45,4 @@ USER app
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
     CMD curl -f http://localhost:${API_PORT}/health || exit 1
 
-ENTRYPOINT ["/app/app"]
-CMD ["-port", "8888"]
+ENTRYPOINT ["sh", "-c", "exec /app/app -port \"${API_PORT}\" \"$@\"", "--"]

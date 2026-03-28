@@ -10,16 +10,13 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-      POSTGRES_INITDB_ARGS: >
-        -c ssl=on
-        -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
-        -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
-        -c logging_collector=on
-        -c log_directory=/var/log/postgresql
-        -c log_filename=postgresql.log
-        -c log_statement=all
     ports:
       - 127.0.0.1:${DB_PORT}:5432
+    command: >
+      -c logging_collector=on
+      -c log_directory=/var/log/postgresql
+      -c log_filename=postgresql.log
+      -c log_statement=all
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
       interval: 5s

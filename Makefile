@@ -1,3 +1,8 @@
+# Makefile settings
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := help
+
 # DB settings
 DB_HOSTNAME ?= localhost
 DB_PORT ?= 5432
@@ -36,13 +41,15 @@ test: ## Run unit tests
 
 .PHONY: test_integration
 test_integration: ## Run integration tests
-	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test ./... -tags=integration
+	@$(ENV_VARS) MIGRATIONS_PATH=$(MIGRATIONS_PATH) go test -race ./... -tags=integration
 
 .PHONY: test_e2e
 test_e2e: ## Run end-to-end tests
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --detach
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e logs curl
-	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes
+	@$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes --remove-orphans >/dev/null 2>&1 || true
+	@status=0; \
+	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e up --build --abort-on-container-exit --exit-code-from curl curl || status=$$?; \
+	$(ENV_VARS) docker-compose -f docker-compose-e2e.yaml -p e2e down --volumes; \
+	exit $$status
 
 # Instalation: brew install golangci-lint
 .PHONY: lint
@@ -70,12 +77,9 @@ db-cli: ## Start the Postgres CLI
 #
 ## API targets
 
-api-build:
-	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api build api-dev
-
 .PHONY: api-start
-api-start: api-build ## Run docker API container
-	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api up --detach api-dev
+api-start: ## Run docker API container
+	@$(ENV_VARS) docker-compose -f docker-compose-api.yaml -p api up --detach --build api-dev
 
 .PHONY: api-stop
 api-stop: ## Stop docker API container
@@ -131,12 +135,9 @@ help:
 
 #### Docker targets ####
 
-docker-build:
-	@$(ENV_VARS) docker-compose -f docker-compose.yaml build
-
 .PHONY: docker-up
-docker-up: docker-build ## Run docker container
-	$(ENV_VARS) docker-compose -f docker-compose.yaml up
+docker-up: ## Run docker container
+	@$(ENV_VARS) docker-compose -f docker-compose.yaml up --build
 
 .PHONY: docker-down
 docker-down: ## Stop docker container

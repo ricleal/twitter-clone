@@ -1,26 +1,34 @@
-[
-  {
-    "email": "jd@mail.com",
-    "id": "3e2186fa-e80f-4726-a010-eb8a102c7800",
-    "name": "John Doe",
-    "username": "foo"
-  }
-]
-{
-  "email": "jd@mail.com",
-  "id": "3e2186fa-e80f-4726-a010-eb8a102c7800",
-  "name": "John Doe",
-  "username": "foo"
-}
-[
-  {
-    "content": "Hello World!",
-    "id": "4828897e-482b-4298-81cf-37a1c7c4d792",
-    "user_id": "3e2186fa-e80f-4726-a010-eb8a102c7800"
-  }
-]
-{
-  "content": "Hello World!",
-  "id": "4828897e-482b-4298-81cf-37a1c7c4d792",
-  "user_id": "3e2186fa-e80f-4726-a010-eb8a102c7800"
-}
+health:200
+users_empty:204
+tweets_empty:204
+users_invalid_uuid:400
+users_invalid_uuid_payload:true
+tweets_invalid_uuid:400
+tweets_invalid_uuid_payload:true
+users_not_found:404
+users_not_found_payload:true
+tweets_not_found:404
+tweets_not_found_payload:true
+users_bad_payload:400
+users_bad_payload_payload:true
+users_create:201
+users_duplicate_username:500
+users_duplicate_username_payload:true
+users_duplicate_email:500
+users_duplicate_email_payload:true
+users_list:200
+users_list_payload:true
+users_get:200
+users_get_payload:true
+tweets_bad_payload:400
+tweets_bad_payload_payload:true
+tweets_invalid_user:400
+tweets_invalid_user_payload:true
+tweets_len_280:201
+tweets_len_281:500
+tweets_len_281_payload:true
+tweets_create:201
+tweets_list:200
+tweets_list_payload:true
+tweets_get:200
+tweets_get_payload:true
